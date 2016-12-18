@@ -1,0 +1,12 @@
+$PROJDIR
+.vs
+
+$PROJDIR/Assets
+Downloaded
+*.meta
+
+$PROJDIR/Library
+metadata
+
+$PROJDIR
+Temp
