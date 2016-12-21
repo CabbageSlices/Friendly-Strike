@@ -54,26 +54,67 @@ public class PlayerController : MonoBehaviour {
 
     void handleInput() {
 
-        float valueHorizontalAxis = Input.GetAxis("Horizontal");
+        float valueHorizontalAxis = Input.GetAxis("Horizontal0");
+
+        determineSpriteDirection(valueHorizontalAxis);
+        determineSpriteArmOrientation();
 
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
-        //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
-        if(valueHorizontalAxis < 0) {
-
-            playerBodySprite.transform.localScale = new Vector3(-1, 1, 1);
-
-        } else if(valueHorizontalAxis > 0) {
-
-            playerBodySprite.transform.localScale = new Vector3(1, 1, 1);
-        }
-
-        if (Input.GetButton("Jump") && isGrounded()) {
+        if (Input.GetButton("Jump0") && isGrounded()) {
 
             velocity.y = jumpSpeed;
         }
 
         body.velocity = velocity;
+    }
+
+    //flip the player's sprite to the left or right depending on which way he is moving
+    void determineSpriteDirection(float valueHorizontalInputAxis) {
+
+        //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
+        Vector3 previousScale = playerBodySprite.transform.localScale;
+
+        //multiply scale by -1 to set the correct sign, that way if player was scaled then his size remains the same
+        if ((valueHorizontalInputAxis < 0 && previousScale.x > 0) || (valueHorizontalInputAxis > 0 && previousScale.x < 0) ) {
+
+            previousScale.x *= -1;
+        }
+
+        playerBodySprite.transform.localScale = previousScale;
+    }
+
+    //rotates the arms so that they're pointing towards the target
+    //flips the arms horizontally if target is to the left or right of the player
+    //this will also take the body's current direction into account so that if player is already facing left and target is to the left, the arms won't be mirrored
+    void determineSpriteArmOrientation() {
+
+        Vector2 mousePositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - arms.transform.position;
+
+        //determine if the arms should be mirrored or not, arms are only mirrored if player is aiming in direction opposite to his arms current orientation
+        //they're facing in different directions if their signs are different
+        if (arms.transform.lossyScale.x * mousePositionRelativeToPlayer.x < 0) {
+
+            Vector3 scale = arms.transform.localScale;
+            scale.x *= -1;
+
+            arms.transform.localScale = scale;
+        }
+
+        //calcualte the angle above the horizontal of the arm
+        //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
+        float angle = Mathf.Atan2(mousePositionRelativeToPlayer.y, Mathf.Abs(mousePositionRelativeToPlayer.x));
+
+        //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
+        if (arms.transform.lossyScale.x < 0)
+            angle *= -1;
+
+        arms.transform.rotation = Quaternion.Euler(0, 0, angle * 180 / 3.14159265f);
+        
+        Physics2D.Raycast(arms.transform.position, arms.transform.rotation * Vector3.right);
+        Debug.DrawRay(arms.transform.position, arms.transform.rotation * Vector3.right);
+        Debug.DrawRay(arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - arms.transform.position, Color.red);
+        
     }
 
     //checks if the player is standing on some kind of platform
