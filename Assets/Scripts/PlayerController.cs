@@ -19,10 +19,12 @@ public class PlayerController : MonoBehaviour {
     [SerializeField]new private BoxCollider2D collider;
     [SerializeField]private Animator animator;
 
+    [SerializeField]private GameObject arms;//the player's arms, used to aim the arms towards the target location
+    [SerializeField]private GameObject playerBodySprite;//object that contains the sprite heirachy for the player, used to flip the player's body when facing different direction
+
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
 
-   
 	void Start () { 
 
         if (body == null)
@@ -33,24 +35,47 @@ public class PlayerController : MonoBehaviour {
         
         if (animator == null)
             Debug.LogWarning("playerController script has no Animator reference (animator is null)");
-        
+
+        if (arms == null)
+            Debug.LogWarning("playerController script is missing a GameObject reference (arms is null)");
+
+        if (playerBodySprite == null)
+            Debug.LogWarning("playerController script is missing a GameObject reference (playerBodySprite is null)");
+
     }
 	
 	// Update is called once per frame
 	void Update () {
 
-        //handle input
-        Vector2 velocity = new Vector2(Input.GetAxis("Horizontal") * speed, body.velocity.y);
+        handleInput();
 
-        if(Input.GetButton("Jump") && isGrounded()) {
+        animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
+    }
+
+    void handleInput() {
+
+        float valueHorizontalAxis = Input.GetAxis("Horizontal");
+
+        Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
+
+        //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
+        if(valueHorizontalAxis < 0) {
+
+            playerBodySprite.transform.localScale = new Vector3(-1, 1, 1);
+
+        } else if(valueHorizontalAxis > 0) {
+
+            playerBodySprite.transform.localScale = new Vector3(1, 1, 1);
+        }
+
+        if (Input.GetButton("Jump") && isGrounded()) {
 
             velocity.y = jumpSpeed;
         }
 
-        animator.SetBool(animationHashCodes.isWalkingKey, velocity.x != 0);
-
         body.velocity = velocity;
     }
+
     //checks if the player is standing on some kind of platform
     //if player is grounded then he can jump by pressing the jump key
     bool isGrounded() {
