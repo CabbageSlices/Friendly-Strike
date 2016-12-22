@@ -7,6 +7,8 @@ public class PlayerController : MonoBehaviour {
     class AnimationHashCodes {
 
         public int isWalkingKey = Animator.StringToHash("IsWalking");
+        public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
+        public int jumpSpeedKey = Animator.StringToHash("JumpSpeed"); //speed is used to transition from jump up to jump down animations (when speed reaches 0 it's transitioning)
     }
 
     //isGrounded does a boxcast beneath the player to check for platforms
@@ -25,8 +27,8 @@ public class PlayerController : MonoBehaviour {
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
 
-	void Start () { 
-
+	void Start () {
+        
         if (body == null)
             Debug.LogWarning("playerController script has no Rigidbody2D reference (body is null)");
 
@@ -49,6 +51,8 @@ public class PlayerController : MonoBehaviour {
 
         handleInput();
 
+        animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
+        animator.SetFloat(animationHashCodes.jumpSpeedKey, Mathf.Abs(body.velocity.y));
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
     }
 
@@ -64,6 +68,11 @@ public class PlayerController : MonoBehaviour {
         if (Input.GetButton("Jump0") && isGrounded()) {
 
             velocity.y = jumpSpeed;
+
+            //rest jump animations since he is now grounded
+            //if user holds jump button then jump animations never stop because animator never has a chance to set jumpspeed to 0 so he is always in jump state
+            animator.SetFloat(animationHashCodes.jumpVelocityKey, 0);
+            animator.SetFloat(animationHashCodes.jumpSpeedKey, 0);
         }
 
         body.velocity = velocity;
