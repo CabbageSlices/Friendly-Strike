@@ -6,6 +6,8 @@ public class PlayerController : MonoBehaviour {
     //keys used by the animator to access the parameters used to change animation states
     class AnimationHashCodes {
 
+        public int pistolReloadingStateKey = Animator.StringToHash("ArmsPistol.Reload");//reloading state in pistol arms layer
+        public int reloadTriggerKey = Animator.StringToHash("Reload");
         public int isWalkingKey = Animator.StringToHash("IsWalking");
         public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
         public int jumpSpeedKey = Animator.StringToHash("JumpSpeed"); //speed is used to transition from jump up to jump down animations (when speed reaches 0 it's transitioning)
@@ -21,6 +23,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField]new private BoxCollider2D collider;
     [SerializeField]private Animator animator;
 
+    [SerializeField]private EquippedWeaponManager weaponManager;//used to handle weapon control
     [SerializeField]private GameObject arms;//the player's arms, used to aim the arms towards the target location
     [SerializeField]private GameObject playerBodySprite;//object that contains the sprite heirachy for the player, used to flip the player's body when facing different direction
 
@@ -38,6 +41,9 @@ public class PlayerController : MonoBehaviour {
         if (animator == null)
             Debug.LogWarning("playerController script has no Animator reference (animator is null)");
 
+        if (weaponManager == null)
+            Debug.LogWarning("playerController script has no EquippedWeaponManager reference (weaponManager is null)");
+
         if (arms == null)
             Debug.LogWarning("playerController script is missing a GameObject reference (arms is null)");
 
@@ -54,6 +60,11 @@ public class PlayerController : MonoBehaviour {
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetFloat(animationHashCodes.jumpSpeedKey, Mathf.Abs(body.velocity.y));
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
+
+        //for some reason the reload trigger doesn't get reset when the reload animation starts
+        //so if player is reloading then reset the trigger
+        if (animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolReloadingStateKey)
+            animator.ResetTrigger(animationHashCodes.reloadTriggerKey);
     }
 
     void handleInput() {
@@ -73,6 +84,11 @@ public class PlayerController : MonoBehaviour {
             //if user holds jump button then jump animations never stop because animator never has a chance to set jumpspeed to 0 so he is always in jump state
             animator.SetFloat(animationHashCodes.jumpVelocityKey, 0);
             animator.SetFloat(animationHashCodes.jumpSpeedKey, 0);
+        }
+
+        if(Input.GetButton("Reload0") && weaponManager.canReload()) {
+
+            animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
 
         body.velocity = velocity;
@@ -113,6 +129,10 @@ public class PlayerController : MonoBehaviour {
         //calcualte the angle above the horizontal of the arm
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
         float angle = Mathf.Atan2(mousePositionRelativeToPlayer.y, Mathf.Abs(mousePositionRelativeToPlayer.x));
+
+        //if user is reloading then disable aiming so it doesn't mess up the reloading animation
+        if (animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolReloadingStateKey)
+            angle = 0;
 
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
         if (arms.transform.lossyScale.x < 0)
