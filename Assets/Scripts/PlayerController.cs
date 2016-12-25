@@ -6,7 +6,14 @@ public class PlayerController : MonoBehaviour {
     //keys used by the animator to access the parameters used to change animation states
     class AnimationHashCodes {
 
+        public int armsAimingStateKey = Animator.StringToHash("Aiming");//aiming state in any layer
+        public int armsReloadingStateKey = Animator.StringToHash("Reload");
+
+        public int pistolFireStateKey = Animator.StringToHash("ArmsPistol.Fire");//firing state in pistol arms layer
         public int pistolReloadingStateKey = Animator.StringToHash("ArmsPistol.Reload");//reloading state in pistol arms layer
+        public int pistolAimingStateKey = Animator.StringToHash("ArmsPistol.Aiming");//aiming state in pistol arms layer
+
+        public int fireTriggerKey = Animator.StringToHash("Fire");
         public int reloadTriggerKey = Animator.StringToHash("Reload");
         public int isWalkingKey = Animator.StringToHash("IsWalking");
         public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
@@ -60,11 +67,6 @@ public class PlayerController : MonoBehaviour {
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetFloat(animationHashCodes.jumpSpeedKey, Mathf.Abs(body.velocity.y));
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
-
-        //for some reason the reload trigger doesn't get reset when the reload animation starts
-        //so if player is reloading then reset the trigger
-        if (animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolReloadingStateKey)
-            animator.ResetTrigger(animationHashCodes.reloadTriggerKey);
     }
 
     void handleInput() {
@@ -86,12 +88,27 @@ public class PlayerController : MonoBehaviour {
             animator.SetFloat(animationHashCodes.jumpSpeedKey, 0);
         }
 
-        if(Input.GetButton("Reload0") && weaponManager.canReload()) {
+        if(Input.GetButtonDown("Reload0") && weaponManager.canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
+        
+        if(Input.GetButton("Fire0") && canFire()) {
+
+            animator.SetTrigger(animationHashCodes.fireTriggerKey);
+        }
 
         body.velocity = velocity;
+    }
+
+    bool canReload() {
+
+        return weaponManager.canReload() && animator.GetCurrentAnimatorStateInfo(1).shortNameHash == animationHashCodes.armsAimingStateKey;
+    }
+
+    bool canFire() {
+
+        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolAimingStateKey;
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving

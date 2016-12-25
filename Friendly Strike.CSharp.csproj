@@ -63,7 +63,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\ResetReloadTrigger.cs" />
     <Compile Include="Assets\Scripts\EquippedWeaponManager.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
