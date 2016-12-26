@@ -11,6 +11,8 @@ public class EquippedWeaponManager : MonoBehaviour {
         public GameObject gun;//gun root object (parent of all of the sprites)
         public GameObject gunBody;//gun body object (parent of cartridge)
         public GameObject cartridge;//cartridge sprite game object, used for reloading animation
+        public GameObject movingPart;//movign part of gun that will go back and forth
+        public GameObject partThatIsAimed;//part of the gun that is aimed toward the target
     }
 
     //the weapon currently equipped by the player
@@ -45,6 +47,8 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.gun = gunTransform.gameObject;
         equippedWeapon.gunBody = gunTransform.Find("GunBody").gameObject;
         equippedWeapon.cartridge = gunTransform.Find("GunBody/GunCartridge").gameObject;
+        equippedWeapon.movingPart = gunTransform.Find("GunBody/GunMovingWhenShot").gameObject;
+        equippedWeapon.partThatIsAimed = gunTransform.Find("GunBody/GunPartThatIsAimed").gameObject;
     }
 
     //moves cartridge from gun to left hand for the reloading animation
@@ -67,6 +71,16 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.cartridge.transform.parent = equippedWeapon.gunBody.transform;
 
         resetCartridgeTransform();
+    }
+
+    public GameObject getPartOfGunToAim() {
+
+        return equippedWeapon.partThatIsAimed;
+    }
+
+    public GameObject getPlayerRightHand() {
+
+        return playerRightHand;
     }
 
     //resets the local position/rotation/scale of the gun cartridge
