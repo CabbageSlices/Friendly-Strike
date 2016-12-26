@@ -10,7 +10,7 @@ public class EquippedWeaponManager : MonoBehaviour {
 
         public GameObject gun;//gun root object (parent of all of the sprites)
         
-        public GunProperties.Parts parts;//gun parts, cached so you don't need to access it using getComponent on the gunproperties script
+        public GunParts parts;//gun parts, cached so you don't need to access it using getComponent on the gunproperties script
     }
 
     //the weapon currently equipped by the player
@@ -43,7 +43,7 @@ public class EquippedWeaponManager : MonoBehaviour {
             return;
 
         equippedWeapon.gun = gunTransform.gameObject;
-        equippedWeapon.parts = (equippedWeapon.gun.GetComponent<GunProperties>() as GunProperties).parts;
+        equippedWeapon.parts = equippedWeapon.gun.GetComponent<GunParts>() as GunParts;
     }
 
     //moves cartridge from gun to left hand for the reloading animation

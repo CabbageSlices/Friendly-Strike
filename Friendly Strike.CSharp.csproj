@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\EquippedWeaponManager.cs" />
+    <Compile Include="Assets\Scripts\GunParts.cs" />
     <Compile Include="Assets\Scripts\GunProperties.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />

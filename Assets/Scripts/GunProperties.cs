@@ -5,16 +5,7 @@ using System.Collections;
 //and keeps references to it's parts
 public class GunProperties : MonoBehaviour {
 
-    [System.Serializable]
-    public struct Parts {
-
-        public GameObject gunBody;//gun body object (parent of cartridge)
-        public GameObject cartridge;//cartridge sprite game object, used for reloading animation
-        public GameObject movingPart;//movign part of gun that will go back and forth
-        public GameObject partThatIsAimed;//part of the gun that is aimed toward the target
-    };
-
-    public Parts parts = new Parts();
+    
 
 	// Use this for initialization
 	void Start () {
