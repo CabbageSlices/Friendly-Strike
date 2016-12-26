@@ -15,6 +15,9 @@ public class GunProperties : MonoBehaviour {
     [System.NonSerialized]
     public float lastFiredTime;
 
+    //bullet that should be produced by this gun when it fires
+    public GameObject bullet;
+
     void Start() {
 
         remainingBullets = bulletsInMagazine;

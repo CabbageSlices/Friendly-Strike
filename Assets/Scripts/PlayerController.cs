@@ -24,6 +24,10 @@ public class PlayerController : MonoBehaviour {
     //this distance is the maximum distance to cast the box
     private float isGroundedBoxCastDistance = 0.1f;
     private AnimationHashCodes animationHashCodes = new AnimationHashCodes();
+
+    //angle between the player and the target he is aiming at
+    //used to fire a bullet
+    private float angleToAimTarget;
     
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
@@ -113,7 +117,7 @@ public class PlayerController : MonoBehaviour {
     void fire() {
 
         animator.SetBool(animationHashCodes.fireKey, true);
-        weaponManager.fire();
+        weaponManager.fire(angleToAimTarget);
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
@@ -163,6 +167,7 @@ public class PlayerController : MonoBehaviour {
         //calcualte the angle above the horizontal of the arm
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
         float angle = Mathf.Atan2(targetPositionRelativeToPlayer.y, Mathf.Abs(targetPositionRelativeToPlayer.x));
+        angleToAimTarget = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);
 
         //now find the angle between the line of sight and the vector to the hand
         //angle between the vector from the arm to the hand and the line of sight vector

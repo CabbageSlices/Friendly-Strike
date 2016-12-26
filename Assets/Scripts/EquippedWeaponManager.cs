@@ -114,13 +114,16 @@ public class EquippedWeaponManager : MonoBehaviour {
         return Time.time > equippedWeapon.properties.lastFiredTime + equippedWeapon.properties.fireDelay && equippedWeapon.properties.remainingBullets > 0;
     }
 
-    public void fire() {
+    public void fire(float angleToTarget) {
 
         if (equippedWeapon.gun == null)
             return;
 
         equippedWeapon.properties.remainingBullets -= 1;
         equippedWeapon.properties.lastFiredTime = Time.time;
+
+        GameObject bullet = Instantiate(equippedWeapon.properties.bullet);
+        (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour).fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget);
     }
     
 }
