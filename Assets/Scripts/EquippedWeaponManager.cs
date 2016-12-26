@@ -9,10 +9,8 @@ public class EquippedWeaponManager : MonoBehaviour {
     struct EquippedWeapon {
 
         public GameObject gun;//gun root object (parent of all of the sprites)
-        public GameObject gunBody;//gun body object (parent of cartridge)
-        public GameObject cartridge;//cartridge sprite game object, used for reloading animation
-        public GameObject movingPart;//movign part of gun that will go back and forth
-        public GameObject partThatIsAimed;//part of the gun that is aimed toward the target
+        
+        public GunProperties.Parts parts;//gun parts, cached so you don't need to access it using getComponent on the gunproperties script
     }
 
     //the weapon currently equipped by the player
@@ -45,37 +43,33 @@ public class EquippedWeaponManager : MonoBehaviour {
             return;
 
         equippedWeapon.gun = gunTransform.gameObject;
-        equippedWeapon.gunBody = gunTransform.Find("GunBody").gameObject;
-        equippedWeapon.cartridge = gunTransform.Find("GunBody/GunCartridge").gameObject;
-        equippedWeapon.movingPart = gunTransform.Find("GunBody/GunMovingWhenShot").gameObject;
-        equippedWeapon.partThatIsAimed = gunTransform.Find("GunBody/GunPartThatIsAimed").gameObject;
+        equippedWeapon.parts = (equippedWeapon.gun.GetComponent<GunProperties>() as GunProperties).parts;
     }
 
     //moves cartridge from gun to left hand for the reloading animation
     public void moveCartridgeToLeftHand() {
 
-        if (equippedWeapon.cartridge == null)
+        if (equippedWeapon.gun == null)
             return;
 
-        equippedWeapon.cartridge.transform.parent = playerLeftHand.transform;
-
+        equippedWeapon.parts.cartridge.transform.parent = playerLeftHand.transform;
         resetCartridgeTransform();
     }
 
     //moves cartridge from left hand back to the gun
     public void moveCartridgeToGun() {
 
-        if (equippedWeapon.cartridge == null)
+        if (equippedWeapon.gun == null)
             return;
 
-        equippedWeapon.cartridge.transform.parent = equippedWeapon.gunBody.transform;
+        equippedWeapon.parts.cartridge.transform.parent = equippedWeapon.parts.gunBody.transform;
 
         resetCartridgeTransform();
     }
 
     public GameObject getPartOfGunToAim() {
 
-        return equippedWeapon.partThatIsAimed;
+        return equippedWeapon.parts.partThatIsAimed;
     }
 
     public GameObject getPlayerRightHand() {
@@ -86,10 +80,9 @@ public class EquippedWeaponManager : MonoBehaviour {
     //resets the local position/rotation/scale of the gun cartridge
     void resetCartridgeTransform() {
 
-        equippedWeapon.cartridge.transform.localPosition = new Vector3(0, 0, 0);
-        equippedWeapon.cartridge.transform.localScale = new Vector3(1, 1, 1);
-        equippedWeapon.cartridge.transform.localRotation = Quaternion.identity;
-
+        equippedWeapon.parts.cartridge.transform.localPosition = new Vector3(0, 0, 0);
+        equippedWeapon.parts.cartridge.transform.localScale = new Vector3(1, 1, 1);
+        equippedWeapon.parts.cartridge.transform.localRotation = Quaternion.identity;
     }
 
     public bool canReload() {

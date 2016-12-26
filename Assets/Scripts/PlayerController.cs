@@ -56,7 +56,6 @@ public class PlayerController : MonoBehaviour {
 
         if (playerBodySprite == null)
             Debug.LogWarning("playerController script is missing a GameObject reference (playerBodySprite is null)");
-
     }
 	
 	// Update is called once per frame
@@ -81,11 +80,6 @@ public class PlayerController : MonoBehaviour {
         if (Input.GetButton("Jump0") && isGrounded()) {
 
             velocity.y = jumpSpeed;
-
-            //rest jump animations since he is now grounded
-            //if user holds jump button then jump animations never stop because animator never has a chance to set jumpspeed to 0 so he is always in jump state
-            animator.SetFloat(animationHashCodes.jumpVelocityKey, 0);
-            animator.SetFloat(animationHashCodes.jumpSpeedKey, 0);
         }
 
         if(Input.GetButtonDown("Reload0") && weaponManager.canReload()) {
@@ -171,9 +165,6 @@ public class PlayerController : MonoBehaviour {
 
             float cosAngle = Vector2.Dot(armToHandTip.normalized, armToBarrelTip.normalized);
             angleOffset = Mathf.Acos(cosAngle) ;
-
-            //Debug.Log(armToBarrelTip + "    " + armToHandTip);
-            Debug.Log(angleOffset);
 
             Debug.DrawRay(arms.transform.position, armToBarrelTip, Color.green);
             
