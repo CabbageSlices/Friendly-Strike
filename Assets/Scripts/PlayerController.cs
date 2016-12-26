@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour {
         public int pistolReloadingStateKey = Animator.StringToHash("ArmsPistol.Reload");//reloading state in pistol arms layer
         public int pistolAimingStateKey = Animator.StringToHash("ArmsPistol.Aiming");//aiming state in pistol arms layer
 
-        public int fireTriggerKey = Animator.StringToHash("Fire");
+        public int fireKey = Animator.StringToHash("Fire");
         public int reloadTriggerKey = Animator.StringToHash("Reload");
         public int isWalkingKey = Animator.StringToHash("IsWalking");
         public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
@@ -90,6 +90,10 @@ public class PlayerController : MonoBehaviour {
         if(Input.GetButton("Fire0") && canFire()) {
 
             fire();
+
+        } else {
+
+            animator.SetBool(animationHashCodes.fireKey, false);
         }
 
         body.velocity = velocity;
@@ -102,13 +106,13 @@ public class PlayerController : MonoBehaviour {
 
     bool canFire() {
 
-        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolAimingStateKey && weaponManager.canFire();
+        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash != animationHashCodes.pistolReloadingStateKey && weaponManager.canFire();
     }
 
     //plays the fire animation, creates a bullet
     void fire() {
 
-        animator.SetTrigger(animationHashCodes.fireTriggerKey);
+        animator.SetBool(animationHashCodes.fireKey, true);
         weaponManager.fire();
     }
 
