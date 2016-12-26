@@ -102,7 +102,7 @@ public class PlayerController : MonoBehaviour {
 
     bool canFire() {
 
-        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolAimingStateKey;
+        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolAimingStateKey && weaponManager.canFire();
     }
 
     //plays the fire animation, creates a bullet

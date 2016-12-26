@@ -105,12 +105,22 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.properties.remainingBullets = equippedWeapon.properties.bulletsInMagazine;
     }
 
+    //gun can fire if there is enough ammo, and the fire delay has passed
+    public bool canFire() {
+
+        if (equippedWeapon.gun == null)
+            return false;
+
+        return Time.time > equippedWeapon.properties.lastFiredTime + equippedWeapon.properties.fireDelay && equippedWeapon.properties.remainingBullets > 0;
+    }
+
     public void fire() {
 
         if (equippedWeapon.gun == null)
             return;
 
         equippedWeapon.properties.remainingBullets -= 1;
+        equippedWeapon.properties.lastFiredTime = Time.time;
     }
     
 }
