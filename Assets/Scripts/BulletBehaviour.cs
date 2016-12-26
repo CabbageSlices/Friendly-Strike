@@ -21,14 +21,18 @@ public class BulletBehaviour : MonoBehaviour {
 
     //when gun is fired it will create a bullet
     //this function will use the given parameters to determine the bullets movement
-    public void fire(Vector3 startingPosition, float gunAngle) {
+    //gunAngle is the angle of the gun IN RADIANS
+    //gunAimDeviation is how much a bullet should strayf rom the intended gunAngle IN DEGREES
+    public void fire(Vector3 startingPosition, float gunAngle, float gunAimDeviation) {
 
         transform.position = startingPosition;
 
-        //make bullet point in the same direction as the gun
-        transform.rotation = Quaternion.Euler(0, 0, gunAngle * 180 / 3.1415f);
+        float actualFireAngle = Mathf.Rad2Deg * gunAngle + Random.Range(-gunAimDeviation, gunAimDeviation);
 
-        rigidBody.velocity = Quaternion.Euler(0, 0, gunAngle * 180 / 3.1415f) * Vector2.right * property.speed;
+        //make bullet point in the same direction as the gun
+        transform.rotation = Quaternion.Euler(0, 0, actualFireAngle);
+
+        rigidBody.velocity = Quaternion.Euler(0, 0, actualFireAngle) * Vector2.right * property.speed;
     }
 	
 	// Update is called once per frame
@@ -40,4 +44,14 @@ public class BulletBehaviour : MonoBehaviour {
         if (originPosition.x > 1 || originPosition.x < 0 || originPosition.y > 1 || originPosition.y < 0)
             Destroy(gameObject, 0.5f);
 	}
+
+    void OnCollisionEnter2D(Collision2D collision) {
+
+        Destroy(gameObject);
+
+        if (collision.gameObject.tag != "Player")
+            return;
+
+
+    }
 }

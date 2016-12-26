@@ -26,7 +26,7 @@ public class PlayerController : MonoBehaviour {
     private AnimationHashCodes animationHashCodes = new AnimationHashCodes();
 
     //angle between the player and the target he is aiming at
-    //used to fire a bullet
+    //used to fire a bullet IN RADIANS
     private float angleToAimTarget;
     
     //object's own components, way to cache the object returned by GetComponent
@@ -167,7 +167,8 @@ public class PlayerController : MonoBehaviour {
         //calcualte the angle above the horizontal of the arm
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
         float angle = Mathf.Atan2(targetPositionRelativeToPlayer.y, Mathf.Abs(targetPositionRelativeToPlayer.x));
-        angleToAimTarget = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);
+        angleToAimTarget = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);//this angle is different from the angle used to rotate the arms
+        //Since angleToAimTarget is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
         //now find the angle between the line of sight and the vector to the hand
         //angle between the vector from the arm to the hand and the line of sight vector
@@ -197,7 +198,7 @@ public class PlayerController : MonoBehaviour {
         if (arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        arms.transform.rotation = Quaternion.Euler(0, 0, angle * 180 / 3.14159265f);
+        arms.transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
         Debug.DrawRay(arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - arms.transform.position, Color.red);
 
     }

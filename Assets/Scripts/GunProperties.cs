@@ -18,6 +18,12 @@ public class GunProperties : MonoBehaviour {
     //bullet that should be produced by this gun when it fires
     public GameObject bullet;
 
+    //how much a bullet deviates from the angle that the gun is aimed at
+    //bullets will be fired at an angle in the range [gunAngle - bulletSpread, gunAngle + bulletSpread]
+    //this angle should be in DEGREES
+    [Range(0.0f, 45)]
+    public float bulletSpread;
+
     void Start() {
 
         remainingBullets = bulletsInMagazine;

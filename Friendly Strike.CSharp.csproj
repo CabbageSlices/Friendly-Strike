@@ -66,6 +66,7 @@
     <Compile Include="Assets\Scripts\BulletBehaviour.cs" />
     <Compile Include="Assets\Scripts\BulletProperties.cs" />
     <Compile Include="Assets\Scripts\EquippedWeaponManager.cs" />
+    <Compile Include="Assets\Scripts\FPSDisplay.cs" />
     <Compile Include="Assets\Scripts\GunParts.cs" />
     <Compile Include="Assets\Scripts\GunProperties.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />

@@ -114,6 +114,7 @@ public class EquippedWeaponManager : MonoBehaviour {
         return Time.time > equippedWeapon.properties.lastFiredTime + equippedWeapon.properties.fireDelay && equippedWeapon.properties.remainingBullets > 0;
     }
 
+    //angle that the player rotated his arms by in order to aim at the target, IN RADIANS
     public void fire(float angleToTarget) {
 
         if (equippedWeapon.gun == null)
@@ -123,7 +124,7 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.properties.lastFiredTime = Time.time;
 
         GameObject bullet = Instantiate(equippedWeapon.properties.bullet);
-        (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour).fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget);
+        (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour).fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
     }
     
 }
