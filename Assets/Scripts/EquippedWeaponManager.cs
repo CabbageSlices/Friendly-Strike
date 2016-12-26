@@ -9,7 +9,8 @@ public class EquippedWeaponManager : MonoBehaviour {
     struct EquippedWeapon {
 
         public GameObject gun;//gun root object (parent of all of the sprites)
-        
+
+        public GunProperties properties;//properties of the gun, like ammo
         public GunParts parts;//gun parts, cached so you don't need to access it using getComponent on the gunproperties script
     }
 
@@ -43,6 +44,7 @@ public class EquippedWeaponManager : MonoBehaviour {
             return;
 
         equippedWeapon.gun = gunTransform.gameObject;
+        equippedWeapon.properties = equippedWeapon.gun.GetComponent<GunProperties>() as GunProperties;
         equippedWeapon.parts = equippedWeapon.gun.GetComponent<GunParts>() as GunParts;
     }
 
@@ -87,7 +89,28 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     public bool canReload() {
 
-        return true;
+        if (equippedWeapon.gun == null)
+            return false;
+
+
+        //don't let player reload if he has max bullets
+        return equippedWeapon.properties.remainingBullets < equippedWeapon.properties.bulletsInMagazine;
+    }
+
+    public void reload() {
+
+        if (equippedWeapon.gun == null)
+            return;
+
+        equippedWeapon.properties.remainingBullets = equippedWeapon.properties.bulletsInMagazine;
+    }
+
+    public void fire() {
+
+        if (equippedWeapon.gun == null)
+            return;
+
+        equippedWeapon.properties.remainingBullets -= 1;
     }
     
 }

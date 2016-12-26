@@ -1,16 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-//class that keeps track of all the properties of a given gun
-//and keeps references to it's parts
+//class that keeps track of all the properties of a given gun, such as ammo, fire rate, etc
 public class GunProperties : MonoBehaviour {
 
-    
+    public int bulletsInMagazine;
+    public int remainingBullets;
 
-	// Use this for initialization
-	void Start () {
+    void Start() {
 
-        if (parts.gunBody == null || parts.cartridge == null || parts.movingPart == null || parts.partThatIsAimed == null)
-            Debug.LogWarning(gameObject.name + " is missing references to its parts");
-	}
+        remainingBullets = bulletsInMagazine;
+    }
 }

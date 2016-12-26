@@ -89,7 +89,7 @@ public class PlayerController : MonoBehaviour {
         
         if(Input.GetButton("Fire0") && canFire()) {
 
-            animator.SetTrigger(animationHashCodes.fireTriggerKey);
+            fire();
         }
 
         body.velocity = velocity;
@@ -103,6 +103,13 @@ public class PlayerController : MonoBehaviour {
     bool canFire() {
 
         return animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolAimingStateKey;
+    }
+
+    //plays the fire animation, creates a bullet
+    void fire() {
+
+        animator.SetTrigger(animationHashCodes.fireTriggerKey);
+        weaponManager.fire();
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
