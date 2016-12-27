@@ -27,7 +27,11 @@ public class PlayerController : MonoBehaviour {
 
     //angle between the player and the target he is aiming at
     //used to fire a bullet IN RADIANS
-    private float angleToAimTarget;
+    private float angleToFireBullets;
+
+    //direction of the target the player is aiming towards relative to the player's arm origin
+    //NORMALIZD vector
+    private Vector2 aimTargetPosition = new Vector2(0, 0);
     
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
@@ -39,6 +43,7 @@ public class PlayerController : MonoBehaviour {
 
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
+    [Range(10, 100)]public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
 
 	void Start () {
         
@@ -73,21 +78,21 @@ public class PlayerController : MonoBehaviour {
 
     void handleInput() {
 
-        float valueHorizontalAxis = Input.GetAxis("Horizontal0");
+        float valueHorizontalAxis = Input.GetAxis("Horizontal1");
 
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
-        if (Input.GetButton("Jump0") && isGrounded()) {
+        if (Input.GetButton("Jump1") && isGrounded()) {
 
             velocity.y = jumpSpeed;
         }
 
-        if(Input.GetButtonDown("Reload0") && weaponManager.canReload()) {
+        if(Input.GetButtonDown("Reload1") && weaponManager.canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
         
-        if(Input.GetButton("Fire0") && canFire()) {
+        if(Input.GetButton("Fire1") && canFire()) {
 
             fire();
 
@@ -113,7 +118,7 @@ public class PlayerController : MonoBehaviour {
     void fire() {
 
         animator.SetBool(animationHashCodes.fireKey, true);
-        weaponManager.fire(angleToAimTarget);
+        weaponManager.fire(angleToFireBullets);
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
@@ -131,16 +136,30 @@ public class PlayerController : MonoBehaviour {
         bodyParts.bodyRoot.transform.localScale = previousScale;
     }
 
-    //calculate where the player's target is relative to his arms
+    //calculate direction to the player's target is relative to his arms
     //this is done to determine the orientation of the arms and gun so that it is pointing in the direction the player is aiming
-    //returns an UNnormalized vector
+    //returns a NORMALIZED vector
     Vector2 calculateVectorToTarget() {
 
         //for keyboard/mouse user
         //if(inputMethod == keyboard)
-        Vector2 targetPositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
+        //aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
 
-        return targetPositionRelativeToPlayer;
+        //for controllers
+        //don't immediately use the input as the target position because we don't want the player's aim to jump around when he lets go of the control stick
+        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal1"), Input.GetAxisRaw("AimVertical1"));
+        float axisDifference = aimTargetPosition.sqrMagnitude - currentAxisValue.sqrMagnitude;
+
+        //ignore values at center of axis that way when player lets go of the stick, the position of the target remains unchanged because
+        //it will use the last recorded input values which are all non zero, and the current reading is zero which is ignored
+        //this will let the user's aim stay close to what it was before he let go of the stick
+        //rawAxis is used because the inputManager's deadzones will output 0 for values at the edge of the deadzone, and i don't want
+        //to have values of 0 outside of my deadzone, i want the actual value of the controller.
+        float deadzone = 0.15f;
+        if(currentAxisValue.sqrMagnitude > deadzone * deadzone)
+            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal1"), Input.GetAxis("AimVertical1"));
+
+        return aimTargetPosition;
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -175,8 +194,8 @@ public class PlayerController : MonoBehaviour {
         //calcualte the angle above the horizontal of the arm
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
         float angle = Mathf.Atan2(targetPositionRelativeToPlayer.y, Mathf.Abs(targetPositionRelativeToPlayer.x));
-        angleToAimTarget = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);//this angle is different from the angle used to rotate the arms
-        //Since angleToAimTarget is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
+        angleToFireBullets = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);//this angle is different from the angle used to rotate the arms
+        //Since angleToFireBullets is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
         angle -= weaponManager.getGunElevationAbovePlayerHands();
 
@@ -188,7 +207,7 @@ public class PlayerController : MonoBehaviour {
         if (bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        bodyParts.arms.transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
+        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime*aimSensitivity) ;
         Debug.DrawRay(bodyParts.arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position, Color.red);
 
     }
