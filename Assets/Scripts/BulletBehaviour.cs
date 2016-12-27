@@ -42,7 +42,7 @@ public class BulletBehaviour : MonoBehaviour {
         Vector3 originPosition = Camera.main.WorldToViewportPoint(transform.position);
 
         if (originPosition.x > 1 || originPosition.x < 0 || originPosition.y > 1 || originPosition.y < 0)
-            Destroy(gameObject, 0.5f);
+            Destroy(gameObject, 0.2f);
 	}
 
     void OnCollisionEnter2D(Collision2D collision) {
@@ -52,6 +52,7 @@ public class BulletBehaviour : MonoBehaviour {
         if (collision.gameObject.tag != "Player")
             return;
 
-
+        //collision with player
+        Destroy(collision.gameObject);
     }
 }
