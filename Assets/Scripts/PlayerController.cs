@@ -35,8 +35,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField]private Animator animator;
 
     [SerializeField]private EquippedWeaponManager weaponManager;//used to handle weapon control
-    [SerializeField]private GameObject arms;//the player's arms, used to aim the arms towards the target location
-    [SerializeField]private GameObject playerBodySprite;//object that contains the sprite heirachy for the player, used to flip the player's body when facing different direction
+    [SerializeField]private PlayerBodyParts bodyParts;//body parts of the player
 
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
@@ -55,11 +54,8 @@ public class PlayerController : MonoBehaviour {
         if (weaponManager == null)
             Debug.LogWarning("playerController script has no EquippedWeaponManager reference (weaponManager is null)");
 
-        if (arms == null)
-            Debug.LogWarning("playerController script is missing a GameObject reference (arms is null)");
-
-        if (playerBodySprite == null)
-            Debug.LogWarning("playerController script is missing a GameObject reference (playerBodySprite is null)");
+        if (bodyParts == null)
+            Debug.LogWarning("playercontroller missing bodyParts refernece");
     }
 	
 	// Update is called once per frame
@@ -124,7 +120,7 @@ public class PlayerController : MonoBehaviour {
     void determineSpriteDirection(float valueHorizontalInputAxis) {
 
         //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
-        Vector3 previousScale = playerBodySprite.transform.localScale;
+        Vector3 previousScale = bodyParts.bodyRoot.transform.localScale;
 
         //multiply scale by -1 to set the correct sign, that way if player was scaled then his size remains the same
         if ((valueHorizontalInputAxis < 0 && previousScale.x > 0) || (valueHorizontalInputAxis > 0 && previousScale.x < 0) ) {
@@ -132,7 +128,7 @@ public class PlayerController : MonoBehaviour {
             previousScale.x *= -1;
         }
 
-        playerBodySprite.transform.localScale = previousScale;
+        bodyParts.bodyRoot.transform.localScale = previousScale;
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -152,16 +148,16 @@ public class PlayerController : MonoBehaviour {
 
         //first get the angle from arm to target
         //position of the target that the player is aiming at, relative to the playe'rs arm
-        Vector2 targetPositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - arms.transform.position;
+        Vector2 targetPositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;// arms.transform.position;
 
         //determine if the arms should be mirrored or not, arms are only mirrored if player is aiming in direction opposite to his arms current orientation
         //they're facing in different directions if their signs are different
-        if (arms.transform.lossyScale.x * targetPositionRelativeToPlayer.x < 0) {
+        if (bodyParts.arms.transform.lossyScale.x * targetPositionRelativeToPlayer.x < 0) {
 
-            Vector3 scale = arms.transform.localScale;
+            Vector3 scale = bodyParts.arms.transform.localScale;
             scale.x *= -1;
 
-            arms.transform.localScale = scale;
+            bodyParts.arms.transform.localScale = scale;
         }
 
         //calcualte the angle above the horizontal of the arm
@@ -177,13 +173,13 @@ public class PlayerController : MonoBehaviour {
         //if player isn't holding gun then no need to modify angle
         if (weaponManager.getPartOfGunToAim() != null) {
 
-            Vector2 armToBarrelTip = weaponManager.getPartOfGunToAim().transform.position - arms.transform.position;
-            Vector2 armToHandTip = weaponManager.getPlayerRightHand().transform.position - arms.transform.position;
+            Vector2 armToBarrelTip = weaponManager.getPartOfGunToAim().transform.position - bodyParts.arms.transform.position;
+            Vector2 armToHandTip = bodyParts.rightHand.transform.position - bodyParts.arms.transform.position;
 
             float cosAngle = Vector2.Dot(armToHandTip.normalized, armToBarrelTip.normalized);
             angleOffset = Mathf.Acos(cosAngle) ;
 
-            Debug.DrawRay(arms.transform.position, armToBarrelTip, Color.green);
+            Debug.DrawRay(bodyParts.arms.transform.position, armToBarrelTip, Color.green);
             
         }
         
@@ -195,11 +191,11 @@ public class PlayerController : MonoBehaviour {
             angle = 0;
 
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
-        if (arms.transform.lossyScale.x < 0)
+        if (bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        arms.transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
-        Debug.DrawRay(arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - arms.transform.position, Color.red);
+        bodyParts.arms.transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
+        Debug.DrawRay(bodyParts.arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position, Color.red);
 
     }
 

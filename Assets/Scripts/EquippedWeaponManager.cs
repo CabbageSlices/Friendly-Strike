@@ -17,19 +17,12 @@ public class EquippedWeaponManager : MonoBehaviour {
     //the weapon currently equipped by the player
     EquippedWeapon equippedWeapon = new EquippedWeapon();
 
-    //player's left hand reference, used to put cartridge into hand for reloading animation
-    public GameObject playerLeftHand;
-
-    //right hand reference, used to equip the gun
-    public GameObject playerRightHand;
+    public PlayerBodyParts playerBodyParts;
 
     void Start() {
 
-        if (playerLeftHand == null)
-            Debug.LogWarning("EquippedWeaponManager is missing a reference to playerLeftHand");
-
-        if (playerRightHand == null)
-            Debug.LogWarning("EquippedWeaponManager is missing a reference to playerRightHand");
+        if (playerBodyParts == null)
+            Debug.LogWarning("EquippedWeaponManager missing reference to playerBodyParts");
 
         //if there is a gun in the player's hand already then get a reference to it
         getReferenceToEquippedGun();
@@ -37,7 +30,7 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     void getReferenceToEquippedGun() {
 
-        Transform gunTransform = playerRightHand.transform.Find("Gun");
+        Transform gunTransform = playerBodyParts.rightHand.transform.Find("Gun");
 
         //no equipped gun, no need to find references
         if (gunTransform == null)
@@ -54,7 +47,7 @@ public class EquippedWeaponManager : MonoBehaviour {
         if (equippedWeapon.gun == null)
             return;
 
-        equippedWeapon.parts.cartridge.transform.parent = playerLeftHand.transform;
+        equippedWeapon.parts.cartridge.transform.parent = playerBodyParts.leftHand.transform;
         resetCartridgeTransform();
     }
 
@@ -72,11 +65,6 @@ public class EquippedWeaponManager : MonoBehaviour {
     public GameObject getPartOfGunToAim() {
 
         return equippedWeapon.parts.partThatIsAimed;
-    }
-
-    public GameObject getPlayerRightHand() {
-
-        return playerRightHand;
     }
 
     //resets the local position/rotation/scale of the gun cartridge
