@@ -69,6 +69,7 @@
     <Compile Include="Assets\Scripts\FPSDisplay.cs" />
     <Compile Include="Assets\Scripts\GunParts.cs" />
     <Compile Include="Assets\Scripts\GunProperties.cs" />
+    <Compile Include="Assets\Scripts\HealthBarManager.cs" />
     <Compile Include="Assets\Scripts\HealthManager.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />
     <Compile Include="Assets\Scripts\PlayerBodyParts.cs" />
