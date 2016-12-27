@@ -12,6 +12,14 @@ public class EquippedWeaponManager : MonoBehaviour {
 
         public GunProperties properties;//properties of the gun, like ammo
         public GunParts parts;//gun parts, cached so you don't need to access it using getComponent on the gunproperties script
+
+        //angle difference between the vector that goes from the base of the player's arm to the hand, and the vector that goes from the
+        //base of the player's arm to the tip of the gun's barrel
+        //this is used to modify the player's aim slightly so that the gun lines up with the vector to the player's target, instead of the player's arm
+        //being lined up
+        //IN RADIANS
+        //see PlayerController::determineSpriteArmOrientation for informatoin about usage
+        public float gunElevationAbovePlayerHands;
     }
 
     //the weapon currently equipped by the player
@@ -39,6 +47,32 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.gun = gunTransform.gameObject;
         equippedWeapon.properties = equippedWeapon.gun.GetComponent<GunProperties>() as GunProperties;
         equippedWeapon.parts = equippedWeapon.gun.GetComponent<GunParts>() as GunParts;
+
+        equippedWeapon.gunElevationAbovePlayerHands = calculateEquippedGunElevation();
+    }
+
+    //calculate the angle of elevation of the tip of the gun barrel above the player's hands, IN RADIANS
+    float calculateEquippedGunElevation() {
+
+        if (equippedWeapon.gun == null)
+            return 0;
+
+        Vector2 armToBarrelTip = equippedWeapon.parts.partThatIsAimed.transform.position - playerBodyParts.arms.transform.position;
+        Vector2 armToHandTip = playerBodyParts.rightHand.transform.position - playerBodyParts.arms.transform.position;
+
+        float cosAngle = Vector2.Dot(armToHandTip.normalized, armToBarrelTip.normalized);
+        float angleOffset = Mathf.Acos(cosAngle);
+
+        //gotta divide by two for whatever reason
+        return angleOffset;
+    }
+
+    //resets the local position/rotation/scale of the gun cartridge
+    void resetCartridgeTransform() {
+
+        equippedWeapon.parts.cartridge.transform.localPosition = new Vector3(0, 0, 0);
+        equippedWeapon.parts.cartridge.transform.localScale = new Vector3(1, 1, 1);
+        equippedWeapon.parts.cartridge.transform.localRotation = Quaternion.identity;
     }
 
     //moves cartridge from gun to left hand for the reloading animation
@@ -67,12 +101,9 @@ public class EquippedWeaponManager : MonoBehaviour {
         return equippedWeapon.parts.partThatIsAimed;
     }
 
-    //resets the local position/rotation/scale of the gun cartridge
-    void resetCartridgeTransform() {
+    public float getGunElevationAbovePlayerHands() {
 
-        equippedWeapon.parts.cartridge.transform.localPosition = new Vector3(0, 0, 0);
-        equippedWeapon.parts.cartridge.transform.localScale = new Vector3(1, 1, 1);
-        equippedWeapon.parts.cartridge.transform.localRotation = Quaternion.identity;
+        return equippedWeapon.gunElevationAbovePlayerHands;
     }
 
     public bool canReload() {

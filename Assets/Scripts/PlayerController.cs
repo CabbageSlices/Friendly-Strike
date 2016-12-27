@@ -66,14 +66,14 @@ public class PlayerController : MonoBehaviour {
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetFloat(animationHashCodes.jumpSpeedKey, Mathf.Abs(body.velocity.y));
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
+
+        determineSpriteDirection();
+        determineSpriteArmOrientation();
     }
 
     void handleInput() {
 
         float valueHorizontalAxis = Input.GetAxis("Horizontal0");
-
-        determineSpriteDirection(valueHorizontalAxis);
-        determineSpriteArmOrientation();
 
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
@@ -117,18 +117,30 @@ public class PlayerController : MonoBehaviour {
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
-    void determineSpriteDirection(float valueHorizontalInputAxis) {
+    void determineSpriteDirection() {
 
         //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
         Vector3 previousScale = bodyParts.bodyRoot.transform.localScale;
 
         //multiply scale by -1 to set the correct sign, that way if player was scaled then his size remains the same
-        if ((valueHorizontalInputAxis < 0 && previousScale.x > 0) || (valueHorizontalInputAxis > 0 && previousScale.x < 0) ) {
+        if ((body.velocity.x < 0 && previousScale.x > 0) || (body.velocity.x > 0 && previousScale.x < 0) ) {
 
             previousScale.x *= -1;
         }
 
         bodyParts.bodyRoot.transform.localScale = previousScale;
+    }
+
+    //calculate where the player's target is relative to his arms
+    //this is done to determine the orientation of the arms and gun so that it is pointing in the direction the player is aiming
+    //returns an UNnormalized vector
+    Vector2 calculateVectorToTarget() {
+
+        //for keyboard/mouse user
+        //if(inputMethod == keyboard)
+        Vector2 targetPositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
+
+        return targetPositionRelativeToPlayer;
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -148,7 +160,7 @@ public class PlayerController : MonoBehaviour {
 
         //first get the angle from arm to target
         //position of the target that the player is aiming at, relative to the playe'rs arm
-        Vector2 targetPositionRelativeToPlayer = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;// arms.transform.position;
+        Vector2 targetPositionRelativeToPlayer = calculateVectorToTarget();
 
         //determine if the arms should be mirrored or not, arms are only mirrored if player is aiming in direction opposite to his arms current orientation
         //they're facing in different directions if their signs are different
@@ -166,28 +178,10 @@ public class PlayerController : MonoBehaviour {
         angleToAimTarget = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);//this angle is different from the angle used to rotate the arms
         //Since angleToAimTarget is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
-        //now find the angle between the line of sight and the vector to the hand
-        //angle between the vector from the arm to the hand and the line of sight vector
-        float angleOffset = 0;
-
-        //if player isn't holding gun then no need to modify angle
-        if (weaponManager.getPartOfGunToAim() != null) {
-
-            Vector2 armToBarrelTip = weaponManager.getPartOfGunToAim().transform.position - bodyParts.arms.transform.position;
-            Vector2 armToHandTip = bodyParts.rightHand.transform.position - bodyParts.arms.transform.position;
-
-            float cosAngle = Vector2.Dot(armToHandTip.normalized, armToBarrelTip.normalized);
-            angleOffset = Mathf.Acos(cosAngle) ;
-
-            Debug.DrawRay(bodyParts.arms.transform.position, armToBarrelTip, Color.green);
-            
-        }
-        
-        //divide by two because it makes it align properly, don't really know why
-        angle -= angleOffset/2;
+        angle -= weaponManager.getGunElevationAbovePlayerHands();
 
         //if user is reloading then disable aiming so it doesn't mess up the reloading animation
-        if (animator.GetCurrentAnimatorStateInfo(1).fullPathHash == animationHashCodes.pistolReloadingStateKey)
+        if (animator.GetCurrentAnimatorStateInfo(1).shortNameHash == animationHashCodes.armsReloadingStateKey)
             angle = 0;
 
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
