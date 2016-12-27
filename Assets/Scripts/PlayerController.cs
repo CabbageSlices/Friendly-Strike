@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour {
     private float angleToFireBullets;
 
     //direction of the target the player is aiming towards relative to the player's arm origin
-    //NORMALIZD vector
+    //UN-NORMALIZD vector because when the player uses a joystick, this will store the user inputs on each axis
     private Vector2 aimTargetPosition = new Vector2(0, 0);
     
     //object's own components, way to cache the object returned by GetComponent
@@ -101,6 +101,8 @@ public class PlayerController : MonoBehaviour {
             animator.SetBool(animationHashCodes.fireKey, false);
         }
 
+        calculateVectorToTarget();
+
         body.velocity = velocity;
     }
 
@@ -138,8 +140,8 @@ public class PlayerController : MonoBehaviour {
 
     //calculate direction to the player's target is relative to his arms
     //this is done to determine the orientation of the arms and gun so that it is pointing in the direction the player is aiming
-    //returns a NORMALIZED vector
-    Vector2 calculateVectorToTarget() {
+    //returns an UN-NORMALIZED vector
+    void calculateVectorToTarget() {
 
         //for keyboard/mouse user
         //if(inputMethod == keyboard)
@@ -148,7 +150,6 @@ public class PlayerController : MonoBehaviour {
         //for controllers
         //don't immediately use the input as the target position because we don't want the player's aim to jump around when he lets go of the control stick
         Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal1"), Input.GetAxisRaw("AimVertical1"));
-        float axisDifference = aimTargetPosition.sqrMagnitude - currentAxisValue.sqrMagnitude;
 
         //ignore values at center of axis that way when player lets go of the stick, the position of the target remains unchanged because
         //it will use the last recorded input values which are all non zero, and the current reading is zero which is ignored
@@ -158,8 +159,6 @@ public class PlayerController : MonoBehaviour {
         float deadzone = 0.15f;
         if(currentAxisValue.sqrMagnitude > deadzone * deadzone)
             aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal1"), Input.GetAxis("AimVertical1"));
-
-        return aimTargetPosition;
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -178,12 +177,10 @@ public class PlayerController : MonoBehaviour {
         //so add the small angle to the angle between the arm to the target to get the angle for hte line of sight            
 
         //first get the angle from arm to target
-        //position of the target that the player is aiming at, relative to the playe'rs arm
-        Vector2 targetPositionRelativeToPlayer = calculateVectorToTarget();
 
         //determine if the arms should be mirrored or not, arms are only mirrored if player is aiming in direction opposite to his arms current orientation
         //they're facing in different directions if their signs are different
-        if (bodyParts.arms.transform.lossyScale.x * targetPositionRelativeToPlayer.x < 0) {
+        if (bodyParts.arms.transform.lossyScale.x * aimTargetPosition.x < 0) {
 
             Vector3 scale = bodyParts.arms.transform.localScale;
             scale.x *= -1;
@@ -193,8 +190,8 @@ public class PlayerController : MonoBehaviour {
 
         //calcualte the angle above the horizontal of the arm
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
-        float angle = Mathf.Atan2(targetPositionRelativeToPlayer.y, Mathf.Abs(targetPositionRelativeToPlayer.x));
-        angleToFireBullets = Mathf.Atan2(targetPositionRelativeToPlayer.y, targetPositionRelativeToPlayer.x);//this angle is different from the angle used to rotate the arms
+        float angle = Mathf.Atan2(aimTargetPosition.y, Mathf.Abs(aimTargetPosition.x));
+        angleToFireBullets = Mathf.Atan2(aimTargetPosition.y, aimTargetPosition.x);//this angle is different from the angle used to rotate the arms
         //Since angleToFireBullets is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
         angle -= weaponManager.getGunElevationAbovePlayerHands();

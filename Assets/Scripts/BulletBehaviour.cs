@@ -52,7 +52,12 @@ public class BulletBehaviour : MonoBehaviour {
         if (collision.gameObject.tag != "Player")
             return;
 
-        //collision with player
-        Destroy(collision.gameObject);
+        //collision with player, damage the player
+        HealthManager healthManager = collision.gameObject.GetComponent<HealthManager>() as HealthManager;
+
+        if (healthManager == null)
+            return;
+
+        healthManager.decreaseHealth(property.damage);
     }
 }
