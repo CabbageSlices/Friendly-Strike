@@ -31,7 +31,8 @@ public class PlayerController : MonoBehaviour {
 
     //direction of the target the player is aiming towards relative to the player's arm origin
     //UN-NORMALIZD vector because when the player uses a joystick, this will store the user inputs on each axis
-    private Vector2 aimTargetPosition = new Vector2(0, 0);
+    //give initial value of the right vector since players start off facing to the right
+    private Vector2 aimTargetPosition = new Vector2(1, 0);
     
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
@@ -44,6 +45,8 @@ public class PlayerController : MonoBehaviour {
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
     [Range(10, 100)]public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
+
+    public int controllerNumber;
 
 	void Start () {
         
@@ -61,6 +64,9 @@ public class PlayerController : MonoBehaviour {
 
         if (bodyParts == null)
             Debug.LogWarning("playercontroller missing bodyParts refernece");
+
+        foreach (string name in Input.GetJoystickNames())
+            Debug.Log(name);
     }
 	
 	// Update is called once per frame
@@ -78,21 +84,21 @@ public class PlayerController : MonoBehaviour {
 
     void handleInput() {
 
-        float valueHorizontalAxis = Input.GetAxis("Horizontal1");
+        float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerNumber);
 
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
-        if (Input.GetButton("Jump1") && isGrounded()) {
+        if (Input.GetButton("Jump" + controllerNumber) && isGrounded()) {
 
             velocity.y = jumpSpeed;
         }
 
-        if(Input.GetButtonDown("Reload1") && weaponManager.canReload()) {
+        if(Input.GetButtonDown("Reload" + controllerNumber) && weaponManager.canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
         
-        if(Input.GetButton("Fire1") && canFire()) {
+        if(Input.GetButton("Fire" + controllerNumber) && canFire()) {
 
             fire();
 
@@ -104,6 +110,12 @@ public class PlayerController : MonoBehaviour {
         calculateVectorToTarget();
 
         body.velocity = velocity;
+
+        for(int i = 1; i < 9; ++i) {
+
+            if (Input.GetKeyDown((KeyCode)System.Enum.Parse(typeof(KeyCode), "Joystick" + i + "Button0")))
+                Debug.Log(i);
+        }
     }
 
     bool canReload() {
@@ -144,12 +156,15 @@ public class PlayerController : MonoBehaviour {
     void calculateVectorToTarget() {
 
         //for keyboard/mouse user
-        //if(inputMethod == keyboard)
-        //aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
+        if(controllerNumber == 0) {
+
+            aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
+            return;
+        }
 
         //for controllers
         //don't immediately use the input as the target position because we don't want the player's aim to jump around when he lets go of the control stick
-        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal1"), Input.GetAxisRaw("AimVertical1"));
+        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal" + controllerNumber), Input.GetAxisRaw("AimVertical" + controllerNumber));
 
         //ignore values at center of axis that way when player lets go of the stick, the position of the target remains unchanged because
         //it will use the last recorded input values which are all non zero, and the current reading is zero which is ignored
@@ -158,7 +173,7 @@ public class PlayerController : MonoBehaviour {
         //to have values of 0 outside of my deadzone, i want the actual value of the controller.
         float deadzone = 0.15f;
         if(currentAxisValue.sqrMagnitude > deadzone * deadzone)
-            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal1"), Input.GetAxis("AimVertical1"));
+            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal" + controllerNumber), Input.GetAxis("AimVertical" + controllerNumber));
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -205,7 +220,7 @@ public class PlayerController : MonoBehaviour {
             angle *= -1;
 
         bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime*aimSensitivity) ;
-        Debug.DrawRay(bodyParts.arms.transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position, Color.red);
+        Debug.DrawRay(bodyParts.arms.transform.position, aimTargetPosition, Color.red);
 
     }
 
@@ -216,16 +231,30 @@ public class PlayerController : MonoBehaviour {
         //player is grounded if there is something below him (distance to object beneath him must be really small)
         //cast a box downwards and if it hits anything then you know player is standing on top of something
         Vector2 boxOrigin = collider.bounds.center;
+        boxOrigin.y -= collider.bounds.extents.y;
+
         Vector2 boxSize = collider.bounds.size;
-        float boxAngle = 0;
+        boxSize.y = 1.0f / 64.0f;
 
         //disable player collider beforehand so boxcast doesn't return player
         collider.enabled = false;
 
+        float boxAngle = 0;
         RaycastHit2D objectBelowPlayer = Physics2D.BoxCast(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance);
 
         collider.enabled = true;
 
         return objectBelowPlayer.collider != null;
+    }
+
+    void OnDrawGizmos() {
+
+        Vector2 boxOrigin = collider.bounds.center;
+        boxOrigin.y -= collider.bounds.extents.y;
+
+        Vector2 boxSize = collider.bounds.size;
+        boxSize.y = 1.0f / 64.0f;
+
+        Gizmos.DrawWireCube(boxOrigin, boxSize);
     }
 }
