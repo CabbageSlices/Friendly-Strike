@@ -18,12 +18,12 @@ public class PlayerController : MonoBehaviour {
         public int reloadTriggerKey = Animator.StringToHash("Reload");
         public int isWalkingKey = Animator.StringToHash("IsWalking");
         public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
-        public int jumpSpeedKey = Animator.StringToHash("JumpSpeed"); //speed is used to transition from jump up to jump down animations (when speed reaches 0 it's transitioning)
+        public int IsGroundedKey = Animator.StringToHash("IsGrounded");
     }
 
     //isGrounded does a boxcast beneath the player to check for platforms
     //this distance is the maximum distance to cast the box
-    private float isGroundedBoxCastDistance = 0.1f;
+    private float isGroundedBoxCastDistance = 0.2f;
     private AnimationHashCodes animationHashCodes = new AnimationHashCodes();
 
     //angle between the player and the target he is aiming at
@@ -37,6 +37,9 @@ public class PlayerController : MonoBehaviour {
 
     //copy of body that is used to create an explosion effect when player dies
     GameObject bodyCloneForDeathEffect;
+
+    //keeps track of wether the player pressed the jump button and is jumping
+    private bool isJumping = false;
     
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
@@ -60,6 +63,16 @@ public class PlayerController : MonoBehaviour {
     //player's team id
     public TeamProperties.Teams team;
 
+    //layers that contain objects that the player can use to jump on top of
+    //this is basically the layers that the physics2D can raycast against when checking if player can jump, or if player is standing on a platform
+    public LayerMask raycastLayers;
+
+    //normal vector of the platform the player is currently standing on
+    private Vector2 groundNormal;
+
+    //debugging
+    public float timeScale;
+
 	void Start () {
         
         if (body == null)
@@ -80,7 +93,7 @@ public class PlayerController : MonoBehaviour {
         if (healthManager == null)
             Debug.LogWarning("PlayerController missing healthManager reference");
 
-        subscribeToEvents();
+        Time.timeScale = timeScale;
     }
 
     void OnEnable() {
@@ -104,15 +117,28 @@ public class PlayerController : MonoBehaviour {
         healthManager.onZeroHealth -= die;
         healthManager.onHealthRestore -= revive;
     }
+
+    void FixedUpdate() {
+
+        Vector2 playerBottom = collider.bounds.center;
+        playerBottom.y -= collider.bounds.extents.y;
+
+        //get normal of platform below player
+        RaycastHit2D hitInfo = Physics2D.Raycast(playerBottom, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
+
+        if (hitInfo.collider != null)
+            groundNormal = hitInfo.normal;
+
+    }
 	
 	// Update is called once per frame
 	void Update () {
-
+        
         handleInput();
 
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
-        animator.SetFloat(animationHashCodes.jumpSpeedKey, Mathf.Abs(body.velocity.y));
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
+        animator.SetBool(animationHashCodes.IsGroundedKey, isGrounded() && !isJumping);
 
         determineSpriteDirection();
         determineSpriteArmOrientation();
@@ -125,7 +151,8 @@ public class PlayerController : MonoBehaviour {
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
         if (Input.GetButton("Jump" + controllerId) && isGrounded()) {
-            
+
+            isJumping = true;
             velocity.y = jumpSpeed;
         }
 
@@ -270,7 +297,9 @@ public class PlayerController : MonoBehaviour {
         collider.enabled = false;
 
         float boxAngle = 0;
-        RaycastHit2D objectBelowPlayer = Physics2D.BoxCast(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance);
+        RaycastHit2D objectBelowPlayer = Physics2D.BoxCast(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
+
+        
 
         collider.enabled = true;
 
@@ -320,5 +349,25 @@ public class PlayerController : MonoBehaviour {
         bodyCloneForDeathEffect = null;
     }
 
+    void OnDrawGizmos() {
 
+        Vector2 boxOrigin = collider.bounds.center;
+        boxOrigin.y -= collider.bounds.extents.y;
+
+        Vector2 boxSize = collider.bounds.size;
+        boxSize.y = 1.0f / 64.0f;//1 unit height
+
+        Gizmos.DrawCube(boxOrigin, boxSize);
+        Vector2 length = new Vector2(0, boxSize.y + isGroundedBoxCastDistance);
+        Debug.DrawLine(boxOrigin, boxOrigin - length, Color.green);
+    }
+
+    void OnCollisionEnter2D(Collision2D collision) {
+
+        //if the colliding object isn't soemthign the player can stand on, then ignore it
+        if( ((1 << collision.gameObject.layer) & raycastLayers.value) == 0) 
+            return;
+
+        isJumping = false;
+    }
 }
