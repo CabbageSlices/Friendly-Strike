@@ -41,6 +41,11 @@ public class PlayerController : MonoBehaviour {
     //keeps track of wether the player pressed the jump button and is jumping
     private bool isJumping = false;
     
+    //which direction the player will move in if he presses the left or right button
+    //this will change when the player stands on different slopes in order to becoem parallel to the slope
+    //when he isn't standing on anything or standing on a flat surface the local axis should align with the global right axis
+    private Vector2 localHorizontalDirection = new Vector2(1, 0);
+
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
     [SerializeField]new private BoxCollider2D collider;
@@ -66,9 +71,6 @@ public class PlayerController : MonoBehaviour {
     //layers that contain objects that the player can use to jump on top of
     //this is basically the layers that the physics2D can raycast against when checking if player can jump, or if player is standing on a platform
     public LayerMask raycastLayers;
-
-    //normal vector of the platform the player is currently standing on
-    private Vector2 groundNormal;
 
     //debugging
     public float timeScale;
@@ -127,30 +129,41 @@ public class PlayerController : MonoBehaviour {
         RaycastHit2D hitInfo = Physics2D.Raycast(playerBottom, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
         if (hitInfo.collider != null)
-            groundNormal = hitInfo.normal;
+            localHorizontalDirection = hitInfo.normal;
 
     }
 	
 	// Update is called once per frame
 	void Update () {
-        
-        handleInput();
+
+        bool isGroundedCached = isGrounded();
+        handleInput(isGroundedCached);
 
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
-        animator.SetBool(animationHashCodes.IsGroundedKey, isGrounded() && !isJumping);
+        animator.SetBool(animationHashCodes.IsGroundedKey, isGroundedCached && !isJumping);
 
         determineSpriteDirection();
         determineSpriteArmOrientation();
     }
 
-    void handleInput() {
+    void handleInput(bool isGroundedCached) {
 
         float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerId);
 
-        Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
+        Vector2 velocity = new Vector2(0, body.velocity.y);
 
-        if (Input.GetButton("Jump" + controllerId) && isGrounded()) {
+        //when player is grounded we don't need a y velocity, but if he is falling then we don't want to override the y velocity
+        //because he will stop mid air
+        if (isGroundedCached)
+            velocity.y = 0;
+
+        //calculate the velocity player should have when moving across the surface of the ground he is standing on
+        Vector2 horizontalVelocity = localHorizontalDirection * valueHorizontalAxis * speed;
+
+        velocity += horizontalVelocity;
+
+        if (Input.GetButton("Jump" + controllerId) && isGroundedCached) {
 
             isJumping = true;
             velocity.y = jumpSpeed;
@@ -299,9 +312,12 @@ public class PlayerController : MonoBehaviour {
         float boxAngle = 0;
         RaycastHit2D objectBelowPlayer = Physics2D.BoxCast(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
-        
-
         collider.enabled = true;
+
+        if (objectBelowPlayer.collider != null)
+            localHorizontalDirection = new Vector2(objectBelowPlayer.normal.y, -objectBelowPlayer.normal.x);
+        else
+            localHorizontalDirection = new Vector2(1, 0);
 
         return objectBelowPlayer.collider != null;
     }
