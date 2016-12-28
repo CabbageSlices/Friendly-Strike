@@ -27,10 +27,15 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     public PlayerBodyParts playerBodyParts;
 
+    //reference to teammanger so that it can be cached and by bullets to ignore collisions
+    private TeamManager teamManager;
+
     void Start() {
 
         if (playerBodyParts == null)
             Debug.LogWarning("EquippedWeaponManager missing reference to playerBodyParts");
+
+        teamManager = gameObject.GetComponentInParent<TeamManager>() as TeamManager;
 
         //if there is a gun in the player's hand already then get a reference to it
         getReferenceToEquippedGun();
@@ -134,7 +139,7 @@ public class EquippedWeaponManager : MonoBehaviour {
     }
 
     //angle that the player rotated his arms by in order to aim at the target, IN RADIANS
-    public void fire(float angleToTarget) {
+    public void fire(float angleToTarget, TeamProperties.Teams teamThatFiredBullet) {
 
         if (equippedWeapon.gun == null)
             return;
@@ -143,7 +148,11 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.properties.lastFiredTime = Time.time;
 
         GameObject bullet = Instantiate(equippedWeapon.properties.bullet);
-        (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour).fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
+        BulletBehaviour behaviourFiredBullet = (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour);
+
+        behaviourFiredBullet.idTeamThatFiredBullet = teamThatFiredBullet;
+        behaviourFiredBullet.teamManager = teamManager;
+        behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
     }
     
 }

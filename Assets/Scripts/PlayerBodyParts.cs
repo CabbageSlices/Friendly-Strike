@@ -7,7 +7,7 @@ public class PlayerBodyParts : MonoBehaviour {
     public GameObject arms;
     public GameObject leftHand;
     public GameObject rightHand;
-    public GameObject bodyRoot;//root game object that contains each of the sprites of the player body
+    public GameObject bodyRoot;//root game object that contains each of the sprites of the player 
 
     void Start() {
 

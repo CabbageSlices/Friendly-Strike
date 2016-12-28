@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour {
 
@@ -33,6 +34,9 @@ public class PlayerController : MonoBehaviour {
     //UN-NORMALIZD vector because when the player uses a joystick, this will store the user inputs on each axis
     //give initial value of the right vector since players start off facing to the right
     private Vector2 aimTargetPosition = new Vector2(1, 0);
+
+    //copy of body that is used to create an explosion effect when player dies
+    GameObject bodyCloneForDeathEffect;
     
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body;
@@ -46,7 +50,15 @@ public class PlayerController : MonoBehaviour {
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
     [Range(10, 100)]public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
 
-    public int controllerNumber;
+    //health manager reference
+    public HealthManager healthManager;
+
+    //id of the controller used to control this player
+    //0 represents keyboard/mouse, all numbers bigger than 0 represent a joypad
+    public int controllerId;
+
+    //player's team id
+    public TeamProperties.Teams team;
 
 	void Start () {
         
@@ -65,8 +77,32 @@ public class PlayerController : MonoBehaviour {
         if (bodyParts == null)
             Debug.LogWarning("playercontroller missing bodyParts refernece");
 
-        foreach (string name in Input.GetJoystickNames())
-            Debug.Log(name);
+        if (healthManager == null)
+            Debug.LogWarning("PlayerController missing healthManager reference");
+
+        subscribeToEvents();
+    }
+
+    void OnEnable() {
+
+        subscribeToEvents();
+    }
+
+    void OnDisable() {
+
+        unsubscribeFromEvents();
+    }
+
+    void subscribeToEvents() {
+
+        healthManager.onZeroHealth += die;
+        healthManager.onHealthRestore += revive;
+    }
+
+    void unsubscribeFromEvents() {
+
+        healthManager.onZeroHealth -= die;
+        healthManager.onHealthRestore -= revive;
     }
 	
 	// Update is called once per frame
@@ -84,21 +120,21 @@ public class PlayerController : MonoBehaviour {
 
     void handleInput() {
 
-        float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerNumber);
+        float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerId);
 
         Vector2 velocity = new Vector2(valueHorizontalAxis * speed, body.velocity.y);
 
-        if (Input.GetButton("Jump" + controllerNumber) && isGrounded()) {
-
+        if (Input.GetButton("Jump" + controllerId) && isGrounded()) {
+            
             velocity.y = jumpSpeed;
         }
 
-        if(Input.GetButtonDown("Reload" + controllerNumber) && weaponManager.canReload()) {
+        if(Input.GetButtonDown("Reload" + controllerId) && weaponManager.canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
         
-        if(Input.GetButton("Fire" + controllerNumber) && canFire()) {
+        if(Input.GetButton("Fire" + controllerId) && canFire()) {
 
             fire();
 
@@ -110,12 +146,6 @@ public class PlayerController : MonoBehaviour {
         calculateVectorToTarget();
 
         body.velocity = velocity;
-
-        for(int i = 1; i < 9; ++i) {
-
-            if (Input.GetKeyDown((KeyCode)System.Enum.Parse(typeof(KeyCode), "Joystick" + i + "Button0")))
-                Debug.Log(i);
-        }
     }
 
     bool canReload() {
@@ -132,7 +162,7 @@ public class PlayerController : MonoBehaviour {
     void fire() {
 
         animator.SetBool(animationHashCodes.fireKey, true);
-        weaponManager.fire(angleToFireBullets);
+        weaponManager.fire(angleToFireBullets, team);
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
@@ -156,7 +186,7 @@ public class PlayerController : MonoBehaviour {
     void calculateVectorToTarget() {
 
         //for keyboard/mouse user
-        if(controllerNumber == 0) {
+        if(controllerId == 0) {
 
             aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
             return;
@@ -164,7 +194,7 @@ public class PlayerController : MonoBehaviour {
 
         //for controllers
         //don't immediately use the input as the target position because we don't want the player's aim to jump around when he lets go of the control stick
-        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal" + controllerNumber), Input.GetAxisRaw("AimVertical" + controllerNumber));
+        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal" + controllerId), Input.GetAxisRaw("AimVertical" + controllerId));
 
         //ignore values at center of axis that way when player lets go of the stick, the position of the target remains unchanged because
         //it will use the last recorded input values which are all non zero, and the current reading is zero which is ignored
@@ -173,7 +203,7 @@ public class PlayerController : MonoBehaviour {
         //to have values of 0 outside of my deadzone, i want the actual value of the controller.
         float deadzone = 0.15f;
         if(currentAxisValue.sqrMagnitude > deadzone * deadzone)
-            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal" + controllerNumber), Input.GetAxis("AimVertical" + controllerNumber));
+            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal" + controllerId), Input.GetAxis("AimVertical" + controllerId));
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -234,7 +264,7 @@ public class PlayerController : MonoBehaviour {
         boxOrigin.y -= collider.bounds.extents.y;
 
         Vector2 boxSize = collider.bounds.size;
-        boxSize.y = 1.0f / 64.0f;
+        boxSize.y = 1.0f / 64.0f;//1 unit height
 
         //disable player collider beforehand so boxcast doesn't return player
         collider.enabled = false;
@@ -247,14 +277,48 @@ public class PlayerController : MonoBehaviour {
         return objectBelowPlayer.collider != null;
     }
 
-    void OnDrawGizmos() {
+    //make a death body part explosion effect
+    void die() {
 
-        Vector2 boxOrigin = collider.bounds.center;
-        boxOrigin.y -= collider.bounds.extents.y;
+        //first make a copy of all of the player's body parts
+        GameObject bodyCopy = GameObject.Instantiate(bodyParts.bodyRoot, bodyParts.bodyRoot.transform.position, bodyParts.bodyRoot.transform.rotation) as GameObject;
+        bodyCopy.GetComponent<Animator>().enabled = false; //disable animations so explosion effect can happen
 
-        Vector2 boxSize = collider.bounds.size;
-        boxSize.y = 1.0f / 64.0f;
+        bodyCopy.transform.localScale = new Vector3(2, 2, 2);
 
-        Gizmos.DrawWireCube(boxOrigin, boxSize);
+        //now find all body parts that have a sprite renderer and are tagged player, since these are the parts that can make up the explosion effect
+        Component[] childrenWithSprites = bodyCopy.GetComponentsInChildren<SpriteRenderer>();
+        
+        foreach(Component component in childrenWithSprites) {
+
+            //ignore anything not tagged player because it could be some other children like a gun or something
+            if (!component.gameObject.CompareTag("PlayerBodyPart"))
+                continue;
+
+            Rigidbody2D cloneRigidBody = component.gameObject.GetComponent<Rigidbody2D>() as Rigidbody2D;
+
+            //player body part found, in order to apppy explosion effect we need to enable the rigidbody and collider
+            cloneRigidBody.isKinematic = false;
+            (component.gameObject.GetComponent<BoxCollider2D>() as BoxCollider2D).enabled = true;
+
+            //push this for explosion effect, all parts should go in some random direction
+            cloneRigidBody.velocity = Vector2.up * Random.Range(0, 20) + Vector2.right * Random.Range(-20, 20);
+            cloneRigidBody.angularVelocity = Random.Range(-90, 90);
+        }
+
+        //disable self so player is hidden
+        gameObject.SetActive(false);
     }
+
+    public void revive() {
+
+        gameObject.SetActive(true);
+
+        if (bodyCloneForDeathEffect != null)
+            GameObject.Destroy(bodyCloneForDeathEffect);
+
+        bodyCloneForDeathEffect = null;
+    }
+
+
 }

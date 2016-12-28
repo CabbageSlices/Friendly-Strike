@@ -74,6 +74,8 @@
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />
     <Compile Include="Assets\Scripts\PlayerBodyParts.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\TeamManager.cs" />
+    <Compile Include="Assets\Scripts\TeamProperties.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

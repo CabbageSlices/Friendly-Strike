@@ -1,13 +1,24 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 //handles all the behaviour for a given type of bullet
 //i.e movement
 public class BulletBehaviour : MonoBehaviour {
 
+    //reference to teamManager to get colliders for players to ignore collision with teamamates of shooter
+    [System.NonSerialized]public TeamManager teamManager;
+    
+    //id of the team that fired the bullet
+    [System.NonSerialized]
+    public TeamProperties.Teams idTeamThatFiredBullet;
+
     //property of the bullet this behaviour refers to
     public BulletProperties property;
     public Rigidbody2D rigidBody;
+
+    //bullets collider cached
+    [SerializeField]private BoxCollider2D boxCollider;
 
 	// Use this for initialization
 	void Start () {
@@ -33,6 +44,16 @@ public class BulletBehaviour : MonoBehaviour {
         transform.rotation = Quaternion.Euler(0, 0, actualFireAngle);
 
         rigidBody.velocity = Quaternion.Euler(0, 0, actualFireAngle) * Vector2.right * property.speed;
+
+        setupCollisionsToIgnore();
+    }
+
+    void setupCollisionsToIgnore() {
+
+        List<BoxCollider2D> teammateColliders = teamManager.collidersForEachTeam[idTeamThatFiredBullet];
+
+        foreach (BoxCollider2D collider in teammateColliders)
+            Physics2D.IgnoreCollision(collider, boxCollider);
     }
 	
 	// Update is called once per frame

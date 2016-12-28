@@ -4,6 +4,11 @@ using System.Collections;
 //keep track of the player's health, and handle increases/decreases
 public class HealthManager : MonoBehaviour {
 
+    public delegate void HealthEvent();
+
+    public event HealthEvent onZeroHealth;//called when health reaches 0
+    public event HealthEvent onHealthRestore;//called when health is restored to full health
+
     public int initialHealth = 100;
     public HealthBarManager healthBarManager;//script that handles the healthbar UI changes
 
@@ -22,8 +27,11 @@ public class HealthManager : MonoBehaviour {
 
         currentHealth -= value;
 
-        if (currentHealth < 0)
+        if (currentHealth <= 0) {
+
             currentHealth = 0;
+            onZeroHealth();
+        }
 
         updateHealthBar();        
     }
@@ -32,6 +40,8 @@ public class HealthManager : MonoBehaviour {
 
         currentHealth = initialHealth;
 
+        onHealthRestore();
+        
         updateHealthBar();
     }
 
