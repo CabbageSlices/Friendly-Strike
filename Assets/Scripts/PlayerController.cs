@@ -75,6 +75,8 @@ public class PlayerController : MonoBehaviour {
     //debugging
     public float timeScale;
 
+    private float defaultGravity;
+
 	void Start () {
         
         if (body == null)
@@ -96,6 +98,8 @@ public class PlayerController : MonoBehaviour {
             Debug.LogWarning("PlayerController missing healthManager reference");
 
         Time.timeScale = timeScale;
+
+        defaultGravity = body.gravityScale;
     }
 
     void OnEnable() {
@@ -119,25 +123,15 @@ public class PlayerController : MonoBehaviour {
         healthManager.onZeroHealth -= die;
         healthManager.onHealthRestore -= revive;
     }
-
-    void FixedUpdate() {
-
-        Vector2 playerBottom = collider.bounds.center;
-        playerBottom.y -= collider.bounds.extents.y;
-
-        //get normal of platform below player
-        RaycastHit2D hitInfo = Physics2D.Raycast(playerBottom, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
-
-        if (hitInfo.collider != null)
-            localHorizontalDirection = hitInfo.normal;
-
-    }
 	
 	// Update is called once per frame
 	void Update () {
 
         bool isGroundedCached = isGrounded();
         handleInput(isGroundedCached);
+
+        if (!isGroundedCached)
+            body.gravityScale = defaultGravity;
 
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
@@ -385,5 +379,6 @@ public class PlayerController : MonoBehaviour {
             return;
 
         isJumping = false;
+        body.gravityScale = 0;
     }
 }
