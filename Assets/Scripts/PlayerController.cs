@@ -133,8 +133,6 @@ public class PlayerController : MonoBehaviour {
         if (!isGroundedCached || isJumping)
             body.gravityScale = defaultGravity;
 
-        Debug.Log(isGroundedCached + "    " + isJumping);
-
         animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
         animator.SetBool(animationHashCodes.IsGroundedKey, isGroundedCached && !isJumping);
@@ -299,21 +297,49 @@ public class PlayerController : MonoBehaviour {
         Vector2 boxOrigin = collider.bounds.center;
         boxOrigin.y -= collider.bounds.extents.y;
 
+        float pixelToUnit = 1.0f/64.0f;
+
         Vector2 boxSize = collider.bounds.size;
-        boxSize.y = 1.0f / 64.0f;//1 unit height
+        boxSize.y = pixelToUnit;//1 unit height
+        
+        //make the boxCast width slightly smaller than player's collider's width that way collisions from the side don't end up triggering a jump
+        boxSize.x -= pixelToUnit;
+
+        //start the box cast slightly below the player's position that way if he collides with something right beside him that is level with him, he won't collide with the bottom of the
+        //object's collider and mess up the localHorizontalDirection calculation
+        boxOrigin.y -= boxSize.y;
 
         //disable player collider beforehand so boxcast doesn't return player
         collider.enabled = false;
 
         float boxAngle = 0;
-        RaycastHit2D objectBelowPlayer = Physics2D.BoxCast(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
+        RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance - boxSize.y, raycastLayers.value);
 
         collider.enabled = true;
 
-        if (objectBelowPlayer.collider != null)
+        //check to see if the boxcast hit the the top of any object, if it did then we can use that to determine the player's local axis, and we can say he is grounded
+        //if the boxcast doesn't return the tops of any objects then it might have hit an object that is right beside the player by accident, and we don't consider that as grounded
+        RaycastHit2D objectBelowPlayer = new RaycastHit2D();
+
+        foreach(var hitBelowPlayer in objectsBelowPlayer) {
+
+            //normal points slightly upwards
+            if(hitBelowPlayer.normal.y > 0.1) {
+
+                objectBelowPlayer = hitBelowPlayer;
+                break;
+            }
+        }
+
+        //if he collided with an object
+        if (objectBelowPlayer.collider != null) {
+
             localHorizontalDirection = new Vector2(objectBelowPlayer.normal.y, -objectBelowPlayer.normal.x);
-        else
+
+        } else {
+
             localHorizontalDirection = new Vector2(1, 0);
+        }
 
         return objectBelowPlayer.collider != null;
     }
@@ -368,6 +394,7 @@ public class PlayerController : MonoBehaviour {
 
         Vector2 boxSize = collider.bounds.size;
         boxSize.y = 1.0f / 64.0f;//1 unit height
+        boxOrigin.y -= boxSize.y;
 
         Gizmos.DrawCube(boxOrigin, boxSize);
         Vector2 length = new Vector2(0, boxSize.y + isGroundedBoxCastDistance);
@@ -380,6 +407,7 @@ public class PlayerController : MonoBehaviour {
         if( ((1 << collision.gameObject.layer) & raycastLayers.value) == 0) 
             return;
 
+        //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
         isJumping = false;
         body.gravityScale = 0;
     }
