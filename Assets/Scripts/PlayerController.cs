@@ -130,7 +130,7 @@ public class PlayerController : MonoBehaviour {
         bool isGroundedCached = isGrounded();
         handleInput(isGroundedCached);
 
-        if (!isGroundedCached)
+        if (!isGroundedCached || isJumping)
             body.gravityScale = defaultGravity;
 
         Debug.Log(isGroundedCached + "    " + isJumping);
@@ -149,8 +149,8 @@ public class PlayerController : MonoBehaviour {
 
         Vector2 velocity = new Vector2(0, body.velocity.y);
 
-        //when player is grounded and not jumping we don't need a y velocity, but if he is falling then we don't want to override the y velocity
-        //because he will stop mid air
+        //when player is grounded and not jumping we don't need a y velocity since he is on the ground and isn't trying to go upwards
+        //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair
         if (isGroundedCached && !isJumping)
             velocity.y = 0;
 
