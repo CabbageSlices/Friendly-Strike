@@ -1,10 +1,10 @@
 $PROJDIR
 .vs
 bin
+Library
 
 $PROJDIR/Assets
 Downloaded
-*.meta
 
 $PROJDIR
 Temp
