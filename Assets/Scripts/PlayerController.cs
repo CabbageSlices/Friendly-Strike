@@ -47,7 +47,7 @@ public class PlayerController : MonoBehaviour {
     private Vector2 localHorizontalDirection = new Vector2(1, 0);
 
     //object's own components, way to cache the object returned by GetComponent
-    [SerializeField]private Rigidbody2D body;
+    [SerializeField]private Rigidbody2D body; 
     [SerializeField]new private BoxCollider2D collider;
     [SerializeField]private Animator animator;
 
