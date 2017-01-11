@@ -22,8 +22,19 @@ public class HealthManager : MonoBehaviour {
 
         currentHealth = initialHealth;
 	}
-	
-	public void decreaseHealth(int value) {
+
+    //updates the healthbar graphics to reflect the current health value
+    void updateHealthBar() {
+
+        if (healthBarManager == null)
+            return;
+
+        //change healthbar value
+        float fractionHealthRemaining = (float)currentHealth / (float)initialHealth;
+        healthBarManager.setHealthValue(fractionHealthRemaining);
+    }
+
+    public void decreaseHealth(int value) {
 
         currentHealth -= value;
 
@@ -45,14 +56,8 @@ public class HealthManager : MonoBehaviour {
         updateHealthBar();
     }
 
-    //updates the healthbar graphics to reflect the current health value
-    void updateHealthBar() {
+    public int getCurrentHealth() {
 
-        if (healthBarManager == null)
-            return;
-
-        //change healthbar value
-        float fractionHealthRemaining = (float)currentHealth / (float)initialHealth;
-        healthBarManager.setHealthValue(fractionHealthRemaining);
+        return currentHealth;
     }
 }

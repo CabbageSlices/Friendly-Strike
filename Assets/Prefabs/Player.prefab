@@ -1201,16 +1201,19 @@ MonoBehaviour:
   animator: {fileID: 95000010391322560}
   weaponManager: {fileID: 114000013063123812}
   bodyParts: {fileID: 114000013011419374}
+  statusDisplayBox: {fileID: 0}
   speed: 10
   jumpSpeed: 20
   aimSensitivity: 100
   healthManager: {fileID: 114000011105009554}
   controllerId: 0
   team: 0
+  playerName: Nimesh Shrestha
+  playerMoney: 0
   raycastLayers:
     serializedVersion: 2
     m_Bits: 1
-  timeScale: 0
+  timeScale: 1
 --- !u!114 &114000010839521662
 MonoBehaviour:
   m_ObjectHideFlags: 1

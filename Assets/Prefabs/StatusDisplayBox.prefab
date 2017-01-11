@@ -55,6 +55,7 @@ GameObject:
   - component: {fileID: 224524928893515366}
   - component: {fileID: 222305102739121076}
   - component: {fileID: 114234959740297668}
+  - component: {fileID: 114806820814944094}
   m_Layer: 5
   m_Name: StatusDisplayBox
   m_TagString: Untagged
@@ -305,6 +306,23 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Nimesh Shrestha
+--- !u!114 &114806820814944094
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1473488567393138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9fe85f4f7bde4d41881e4343bc7968e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  displayBoxSprite: {fileID: 114234959740297668}
+  playerName: {fileID: 114783585654675518}
+  health: {fileID: 114343124705642356}
+  money: {fileID: 114586597331938846}
+  ammo: {fileID: 114618321680306864}
+  score: {fileID: 114732144529465808}
 --- !u!222 &222031953231841580
 CanvasRenderer:
   m_ObjectHideFlags: 1

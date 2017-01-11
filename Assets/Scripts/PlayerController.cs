@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour {
     private AnimationHashCodes animationHashCodes = new AnimationHashCodes();
 
     //angle between the player and the target he is aiming at
-    //used to fire a bullet IN RADIANS
+    //used to fire a bullet, IN RADIANS
     private float angleToFireBullets;
 
     //direction of the target the player is aiming towards relative to the player's arm origin
@@ -36,15 +36,23 @@ public class PlayerController : MonoBehaviour {
     private Vector2 aimTargetPosition = new Vector2(1, 0);
 
     //copy of body that is used to create an explosion effect when player dies
+    //when player dies he will explode into several pieces, and this gameobject will be the parent of all of the body parts,
+    //that way we can delete this clone to remove all pieces
     GameObject bodyCloneForDeathEffect;
 
     //keeps track of wether the player pressed the jump button and is jumping
+    //needed to distinguish between player walking off a platform, and player jumping
+    //if player jumps he should play jumping animation, if player walks off platform (isGroudned = false) then he should play falling animation
     private bool isJumping = false;
     
     //which direction the player will move in if he presses the left or right button
     //this will change when the player stands on different slopes in order to becoem parallel to the slope
     //when he isn't standing on anything or standing on a flat surface the local axis should align with the global right axis
     private Vector2 localHorizontalDirection = new Vector2(1, 0);
+
+    //default player gravity that is set in the editor
+    //when player lands on a platform we need to set his gravity to 0 otherwise he will slide down slopes
+    private float defaultGravity;
 
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]private Rigidbody2D body; 
@@ -53,6 +61,9 @@ public class PlayerController : MonoBehaviour {
 
     [SerializeField]private EquippedWeaponManager weaponManager;//used to handle weapon control
     [SerializeField]private PlayerBodyParts bodyParts;//body parts of the player
+
+    //reference to the player's status display box
+    public StatusDisplayBoxController statusDisplayBox;
 
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
@@ -68,14 +79,15 @@ public class PlayerController : MonoBehaviour {
     //player's team id
     public TeamProperties.Teams team;
 
+    public string playerName;
+    public int playerMoney;
+
     //layers that contain objects that the player can use to jump on top of
     //this is basically the layers that the physics2D can raycast against when checking if player can jump, or if player is standing on a platform
     public LayerMask raycastLayers;
 
-    //debugging
+    //debugging, freezing or slowing down time
     public float timeScale;
-
-    private float defaultGravity;
 
 	void Start () {
         
@@ -97,6 +109,9 @@ public class PlayerController : MonoBehaviour {
         if (healthManager == null)
             Debug.LogWarning("PlayerController missing healthManager reference");
 
+        if(statusDisplayBox == null)
+            Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
+
         Time.timeScale = timeScale;
 
         defaultGravity = body.gravityScale;
@@ -116,16 +131,35 @@ public class PlayerController : MonoBehaviour {
 
         healthManager.onZeroHealth += die;
         healthManager.onHealthRestore += revive;
+
+        subscribeStatusDisplayBoxToEvents();
+    }
+
+    //make status display box track different events so that the values in the box are updated automatically
+    void subscribeStatusDisplayBoxToEvents() {
+
+        if(statusDisplayBox == null)
+            return;
+
+
     }
 
     void unsubscribeFromEvents() {
 
         healthManager.onZeroHealth -= die;
         healthManager.onHealthRestore -= revive;
+
+        unsubscribeStatusDisplayBoxFromEvents();
     }
 	
-	// Update is called once per frame
-	void Update () {
+    void unsubscribeStatusDisplayBoxFromEvents() {
+
+        if(statusDisplayBox == null)
+            return;
+    }
+
+    // Update is called once per frame
+    void Update () {
 
         bool isGroundedCached = isGrounded();
         handleInput(isGroundedCached);
@@ -141,6 +175,7 @@ public class PlayerController : MonoBehaviour {
         determineSpriteArmOrientation();
     }
 
+    //reads the player's input to determine his movement and orientation
     void handleInput(bool isGroundedCached) {
 
         float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerId);
@@ -148,7 +183,7 @@ public class PlayerController : MonoBehaviour {
         Vector2 velocity = new Vector2(0, body.velocity.y);
 
         //when player is grounded and not jumping we don't need a y velocity since he is on the ground and isn't trying to go upwards
-        //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair
+        //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair 
         if (isGroundedCached && !isJumping)
             velocity.y = 0;
 
@@ -157,7 +192,7 @@ public class PlayerController : MonoBehaviour {
 
         velocity += horizontalVelocity;
 
-        if (Input.GetButton("Jump" + controllerId) && isGroundedCached) {
+        if (Input.GetButtonDown("Jump" + controllerId) && isGroundedCached) {
 
             isJumping = true;
             velocity.y = jumpSpeed;
@@ -214,7 +249,7 @@ public class PlayerController : MonoBehaviour {
         bodyParts.bodyRoot.transform.localScale = previousScale;
     }
 
-    //calculate direction to the player's target is relative to his arms
+    //calculate direction to the player's target relative to his arms
     //this is done to determine the orientation of the arms and gun so that it is pointing in the direction the player is aiming
     //returns an UN-NORMALIZED vector
     void calculateVectorToTarget() {
@@ -301,9 +336,6 @@ public class PlayerController : MonoBehaviour {
 
         Vector2 boxSize = collider.bounds.size;
         boxSize.y = pixelToUnit;//1 unit height
-        
-        //make the boxCast width slightly smaller than player's collider's width that way collisions from the side don't end up triggering a jump
-        boxSize.x -= pixelToUnit;
 
         //start the box cast slightly below the player's position that way if he collides with something right beside him that is level with him, he won't collide with the bottom of the
         //object's collider and mess up the localHorizontalDirection calculation
@@ -313,7 +345,7 @@ public class PlayerController : MonoBehaviour {
         collider.enabled = false;
 
         float boxAngle = 0;
-        RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance - boxSize.y, raycastLayers.value);
+        RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
         collider.enabled = true;
 
@@ -342,6 +374,20 @@ public class PlayerController : MonoBehaviour {
         }
 
         return objectBelowPlayer.collider != null;
+    }
+
+    void OnDrawGizmos() {
+
+        Vector2 boxOrigin = collider.bounds.center;
+        boxOrigin.y -= collider.bounds.extents.y;
+
+        Vector2 boxSize = collider.bounds.size;
+        boxSize.y = 1.0f / 64.0f;//1 unit height
+        boxOrigin.y -= boxSize.y;
+
+        Gizmos.DrawCube(boxOrigin, boxSize);
+        Vector2 length = new Vector2(0, boxSize.y + isGroundedBoxCastDistance);
+        Debug.DrawLine(boxOrigin, boxOrigin - length, Color.green);
     }
 
     //make a death body part explosion effect
@@ -387,28 +433,33 @@ public class PlayerController : MonoBehaviour {
         bodyCloneForDeathEffect = null;
     }
 
-    void OnDrawGizmos() {
-
-        Vector2 boxOrigin = collider.bounds.center;
-        boxOrigin.y -= collider.bounds.extents.y;
-
-        Vector2 boxSize = collider.bounds.size;
-        boxSize.y = 1.0f / 64.0f;//1 unit height
-        boxOrigin.y -= boxSize.y;
-
-        Gizmos.DrawCube(boxOrigin, boxSize);
-        Vector2 length = new Vector2(0, boxSize.y + isGroundedBoxCastDistance);
-        Debug.DrawLine(boxOrigin, boxOrigin - length, Color.green);
-    }
-
     void OnCollisionEnter2D(Collision2D collision) {
 
         //if the colliding object isn't soemthign the player can stand on, then ignore it
         if( ((1 << collision.gameObject.layer) & raycastLayers.value) == 0) 
             return;
 
+        //if player is going upwards then he might have passed through a one way platform so he is still jumping
+        //don't comment this out becaues it will cause infinite jumping if player starts moving up a slope and jumps,
+        //but lands on the slope again while he is still goign upwards
+        /*if(body.velocity.y > 0)
+            return;*/
+
         //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
         isJumping = false;
         body.gravityScale = 0;
+    }
+
+    //assigns the given display box to this player and makes the box track this player's information
+    public void assignStatusDisplayBox(StatusDisplayBoxController displayBoxController) {
+
+        statusDisplayBox = displayBoxController;
+
+        //set the initial values for the display box
+        statusDisplayBox.setAmmo(weaponManager.getAmmo());
+        statusDisplayBox.setPlayerName(playerName);
+        statusDisplayBox.setHealth(healthManager.getCurrentHealth());
+        statusDisplayBox.setMoney(playerMoney);
+        statusDisplayBox.setScore(0);
     }
 }

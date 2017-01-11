@@ -154,5 +154,13 @@ public class EquippedWeaponManager : MonoBehaviour {
         behaviourFiredBullet.teamManager = teamManager;
         behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
     }
+
+    public int getAmmo() {
+
+        if(equippedWeapon.gun == null)
+            return 0;
+
+        return equippedWeapon.properties.remainingBullets;
+    }
     
 }
