@@ -6,6 +6,7 @@ using System.Collections.Generic;
 //also used by bullets to disable collision with entire teams
 public class TeamManager : MonoBehaviour {
 
+    //keep track of which team has which players
     public Dictionary<TeamProperties.Teams, List<PlayerController> > playersInTeams = new Dictionary<TeamProperties.Teams, List<PlayerController> >() {
 
         {TeamProperties.Teams.red, new List<PlayerController>()},

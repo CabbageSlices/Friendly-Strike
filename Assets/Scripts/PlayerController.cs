@@ -141,7 +141,7 @@ public class PlayerController : MonoBehaviour {
         if(statusDisplayBox == null)
             return;
 
-
+        healthManager.onHealthChange += statusDisplayBox.setHealth;
     }
 
     void unsubscribeFromEvents() {
@@ -156,6 +156,8 @@ public class PlayerController : MonoBehaviour {
 
         if(statusDisplayBox == null)
             return;
+
+        healthManager.onHealthChange -= statusDisplayBox.setHealth;
     }
 
     // Update is called once per frame
@@ -453,13 +455,18 @@ public class PlayerController : MonoBehaviour {
     //assigns the given display box to this player and makes the box track this player's information
     public void assignStatusDisplayBox(StatusDisplayBoxController displayBoxController) {
 
+        unsubscribeStatusDisplayBoxFromEvents();
+
         statusDisplayBox = displayBoxController;
 
         //set the initial values for the display box
         statusDisplayBox.setAmmo(weaponManager.getAmmo());
+        statusDisplayBox.setTeamColor(team);
         statusDisplayBox.setPlayerName(playerName);
         statusDisplayBox.setHealth(healthManager.getCurrentHealth());
         statusDisplayBox.setMoney(playerMoney);
         statusDisplayBox.setScore(0);
+
+        subscribeStatusDisplayBoxToEvents();
     }
 }

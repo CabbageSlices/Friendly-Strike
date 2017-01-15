@@ -5,9 +5,11 @@ using System.Collections;
 public class HealthManager : MonoBehaviour {
 
     public delegate void HealthEvent();
+    public delegate void HealthChangeEvent(int newHealth);
 
     public event HealthEvent onZeroHealth;//called when health reaches 0
     public event HealthEvent onHealthRestore;//called when health is restored to full health
+    public event HealthChangeEvent onHealthChange;//called when player's health changes value somehow
 
     public int initialHealth = 100;
     public HealthBarManager healthBarManager;//script that handles the healthbar UI changes
@@ -41,8 +43,16 @@ public class HealthManager : MonoBehaviour {
         if (currentHealth <= 0) {
 
             currentHealth = 0;
-            onZeroHealth();
+
+            if (onHealthChange != null)
+                onHealthChange(currentHealth); //run this once before onZeroHealth because the onZeroHealth might kill the player and disable his game object, which would prevent the onhealthChange from activiating and so status display box won't update
+
+            if(onZeroHealth != null)
+                onZeroHealth();
         }
+
+        if(onHealthChange != null)
+            onHealthChange(currentHealth);
 
         updateHealthBar();        
     }
@@ -50,8 +60,12 @@ public class HealthManager : MonoBehaviour {
     public void restoreHealth() {
 
         currentHealth = initialHealth;
+           
+        if(onHealthChange != null)
+            onHealthChange(currentHealth);
 
-        onHealthRestore();
+        if(onHealthRestore != null)
+            onHealthRestore();
         
         updateHealthBar();
     }
