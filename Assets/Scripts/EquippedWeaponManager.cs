@@ -23,12 +23,15 @@ public class EquippedWeaponManager : MonoBehaviour {
     }
 
     //the weapon currently equipped by the player
-    EquippedWeapon equippedWeapon = new EquippedWeapon();
-
-    public PlayerBodyParts playerBodyParts;
+    private EquippedWeapon equippedWeapon = new EquippedWeapon();
 
     //reference to teammanger so that it can be cached and by bullets to ignore collisions
     private TeamManager teamManager;
+
+    public delegate void ChangeAmmo(int newAmmo);
+    public event ChangeAmmo onAmmoChange;//event called when the player's equippied weapon's current ammo changes
+
+    public PlayerBodyParts playerBodyParts;
 
     void Start() {
 
@@ -127,6 +130,9 @@ public class EquippedWeaponManager : MonoBehaviour {
             return;
 
         equippedWeapon.properties.remainingBullets = equippedWeapon.properties.bulletsInMagazine;
+
+        if (onAmmoChange != null)
+            onAmmoChange(equippedWeapon.properties.remainingBullets);
     }
 
     //gun can fire if there is enough ammo, and the fire delay has passed
@@ -153,6 +159,9 @@ public class EquippedWeaponManager : MonoBehaviour {
         behaviourFiredBullet.idTeamThatFiredBullet = teamThatFiredBullet;
         behaviourFiredBullet.teamManager = teamManager;
         behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
+
+        if(onAmmoChange != null)
+            onAmmoChange(equippedWeapon.properties.remainingBullets);
     }
 
     public int getAmmo() {

@@ -142,6 +142,7 @@ public class PlayerController : MonoBehaviour {
             return;
 
         healthManager.onHealthChange += statusDisplayBox.setHealth;
+        weaponManager.onAmmoChange += statusDisplayBox.setAmmo;
     }
 
     void unsubscribeFromEvents() {
@@ -158,6 +159,7 @@ public class PlayerController : MonoBehaviour {
             return;
 
         healthManager.onHealthChange -= statusDisplayBox.setHealth;
+        weaponManager.onAmmoChange -= statusDisplayBox.setAmmo;
     }
 
     // Update is called once per frame
@@ -234,6 +236,7 @@ public class PlayerController : MonoBehaviour {
 
         animator.SetBool(animationHashCodes.fireKey, true);
         weaponManager.fire(angleToFireBullets, team);
+
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
