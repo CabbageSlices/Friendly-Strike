@@ -52,6 +52,7 @@ public class PlayerController : MonoBehaviour {
 
     //default player gravity that is set in the editor
     //when player lands on a platform we need to set his gravity to 0 otherwise he will slide down slopes
+    //when player jumps or falls off a platform we reset gravity to whatever it was initially
     private float defaultGravity;
 
     //object's own components, way to cache the object returned by GetComponent
@@ -188,6 +189,8 @@ public class PlayerController : MonoBehaviour {
 
         //when player is grounded and not jumping we don't need a y velocity since he is on the ground and isn't trying to go upwards
         //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair 
+        //we need to make sure player isn't jumping because he might have started jumping but he might be close enough to the ground to be eregistered as grounded
+        //in which case we can't disable velocity or player will never go up
         if (isGroundedCached && !isJumping)
             velocity.y = 0;
 
@@ -371,6 +374,8 @@ public class PlayerController : MonoBehaviour {
         //if he collided with an object
         if (objectBelowPlayer.collider != null) {
 
+            //align the players horizontal direction to be parallel with the  top of the ground
+            //that way when he moves left/right he climbs up/down a slope and doesn't try to walk into it
             localHorizontalDirection = new Vector2(objectBelowPlayer.normal.y, -objectBelowPlayer.normal.x);
 
         } else {
@@ -402,6 +407,8 @@ public class PlayerController : MonoBehaviour {
         GameObject bodyCopy = GameObject.Instantiate(bodyParts.bodyRoot, bodyParts.bodyRoot.transform.position, bodyParts.bodyRoot.transform.rotation) as GameObject;
         bodyCopy.GetComponent<Animator>().enabled = false; //disable animations so explosion effect can happen
 
+        //GET RID OF THIS LATER
+        //temp sprites were scaled down by 1/2 so scale them back up again
         bodyCopy.transform.localScale = new Vector3(2, 2, 2);
 
         //now find all body parts that have a sprite renderer and are tagged player, since these are the parts that can make up the explosion effect
@@ -417,6 +424,7 @@ public class PlayerController : MonoBehaviour {
 
             //player body part found, in order to apppy explosion effect we need to enable the rigidbody and collider
             cloneRigidBody.isKinematic = false;
+            cloneRigidBody.simulated = true;
             (component.gameObject.GetComponent<BoxCollider2D>() as BoxCollider2D).enabled = true;
 
             //push this for explosion effect, all parts should go in some random direction
@@ -424,12 +432,15 @@ public class PlayerController : MonoBehaviour {
             cloneRigidBody.angularVelocity = Random.Range(-90, 90);
         }
 
-        //disable self so player is hidden
-        gameObject.SetActive(false);
+        //disable player body so it isn't drawn, don't disable player game object  because we need healthbar to animate
+        //once player healthbar reaches 0 we can stop drawing player
+        bodyParts.bodyRoot.SetActive(false);
+        //gameObject.SetActive(false);
     }
 
     public void revive() {
 
+        bodyParts.bodyRoot.SetActive(true);
         gameObject.SetActive(true);
 
         if (bodyCloneForDeathEffect != null)

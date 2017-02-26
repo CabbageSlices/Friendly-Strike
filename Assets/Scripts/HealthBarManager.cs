@@ -27,6 +27,12 @@ public class HealthBarManager : MonoBehaviour {
         
         //move health toward target value until you're close enough
         tweenHealthToTarget();
+        
+        //health reached 0, should hide the health bar
+        if(healthValueIndicator.localScale.x == 0) {
+
+            hideHealthBar();
+        }
     }
 
     private void tweenHealthToTarget() {

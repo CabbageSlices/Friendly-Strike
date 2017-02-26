@@ -806,7 +806,7 @@ GameObject:
   m_Component:
   - component: {fileID: 553840837}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: GameController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -825,6 +825,67 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &611942824
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 1588496190}
+    m_Modifications:
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000013821190802, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+      propertyPath: m_Name
+      value: Player (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000010739234764, guid: d8c40cc11a8f87848b2d3bd96a719dc1,
+        type: 2}
+      propertyPath: controllerId
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000010739234764, guid: d8c40cc11a8f87848b2d3bd96a719dc1,
+        type: 2}
+      propertyPath: playerName
+      value: asdf
+      objectReference: {fileID: 0}
+    - target: {fileID: 114000010739234764, guid: d8c40cc11a8f87848b2d3bd96a719dc1,
+        type: 2}
+      propertyPath: team
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
+  m_IsPrefabParent: 0
 --- !u!224 &699032716 stripped
 RectTransform:
   m_PrefabParentObject: {fileID: 224524928893515366, guid: 88a54f71ded92814b8c88e6eeb6d569a,
@@ -1555,6 +1616,7 @@ Transform:
   m_Children:
   - {fileID: 1918070859}
   - {fileID: 801763484}
+  - {fileID: 1748330954}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1742,6 +1804,11 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1707822933}
+--- !u!4 &1748330954 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4000013219510032, guid: d8c40cc11a8f87848b2d3bd96a719dc1,
+    type: 2}
+  m_PrefabInternal: {fileID: 611942824}
 --- !u!1001 &1841924979
 Prefab:
   m_ObjectHideFlags: 0
@@ -2074,11 +2141,6 @@ Prefab:
     - target: {fileID: 1473488567393138, guid: 88a54f71ded92814b8c88e6eeb6d569a, type: 2}
       propertyPath: m_Name
       value: Player1
-      objectReference: {fileID: 0}
-    - target: {fileID: 224021015632495064, guid: 88a54f71ded92814b8c88e6eeb6d569a,
-        type: 2}
-      propertyPath: m_AnchoredPosition.x
-      value: -0.30000305
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 88a54f71ded92814b8c88e6eeb6d569a, type: 2}

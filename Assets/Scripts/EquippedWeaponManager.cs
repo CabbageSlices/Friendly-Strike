@@ -25,7 +25,7 @@ public class EquippedWeaponManager : MonoBehaviour {
     //the weapon currently equipped by the player
     private EquippedWeapon equippedWeapon = new EquippedWeapon();
 
-    //reference to teammanger so that it can be cached and by bullets to ignore collisions
+    //reference to teammanger so that it can be cached and used by bullets to ignore collisions
     private TeamManager teamManager;
 
     public delegate void ChangeAmmo(int newAmmo);

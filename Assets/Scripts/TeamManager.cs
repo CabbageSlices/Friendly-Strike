@@ -46,9 +46,14 @@ public class TeamManager : MonoBehaviour {
             collidersForEachTeam[playerController.team].Add(child.gameObject.GetComponent<BoxCollider2D>() as BoxCollider2D);
         }
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    private void Start() {
+
+        registerPlayersIntoChosenTeams();
+    }
+
+    // Update is called once per frame
+    void Update () {
 
         if (Input.GetKeyDown(KeyCode.Z))
             registerPlayersIntoChosenTeams();

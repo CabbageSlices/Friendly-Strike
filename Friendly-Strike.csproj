@@ -79,6 +79,7 @@
     <Compile Include="Assets\Scripts\BulletProperties.cs" />
     <Compile Include="Assets\Scripts\EquippedWeaponManager.cs" />
     <Compile Include="Assets\Scripts\FPSDisplay.cs" />
+    <Compile Include="Assets\Scripts\GameController.cs" />
     <Compile Include="Assets\Scripts\GunParts.cs" />
     <Compile Include="Assets\Scripts\GunProperties.cs" />
     <Compile Include="Assets\Scripts\HealthBarManager.cs" />
@@ -91,7 +92,6 @@
     <Compile Include="Assets\Scripts\TeamManager.cs" />
     <Compile Include="Assets\Scripts\TeamProperties.cs" />
     <Compile Include="Assets\Scripts\TeamScoreManager.cs" />
-    <Compile Include="Assets\Scripts\control.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

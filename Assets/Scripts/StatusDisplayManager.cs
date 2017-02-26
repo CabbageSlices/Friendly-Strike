@@ -50,9 +50,4 @@ public class StatusDisplayManager : MonoBehaviour {
 
         assignStatusDisplayBoxesToPlayers();
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 }

@@ -60,6 +60,9 @@ public class HealthManager : MonoBehaviour {
     public void restoreHealth() {
 
         currentHealth = initialHealth;
+        
+        //enable health bar since it was disabled when player reached 0 health
+        healthBarManager.showHealthBar();
            
         if(onHealthChange != null)
             onHealthChange(currentHealth);
