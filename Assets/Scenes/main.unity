@@ -920,6 +920,11 @@ Prefab:
       propertyPath: initialHealth
       value: 100
       objectReference: {fileID: 0}
+    - target: {fileID: 61000012801974482, guid: d8c40cc11a8f87848b2d3bd96a719dc1,
+        type: 2}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: d8c40cc11a8f87848b2d3bd96a719dc1, type: 2}
   m_IsPrefabParent: 0

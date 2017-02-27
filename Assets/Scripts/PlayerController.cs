@@ -353,13 +353,16 @@ public class PlayerController : MonoBehaviour {
         //object's collider and mess up the localHorizontalDirection calculation
         boxOrigin.y -= boxSize.y;
 
+        //some other function mighthave disabled collider, and we don't wanna forcibly enable collider incase it was disabled before, so keep track of whether it was previously enabled/disabled
+        bool colliderEnabledCache = collider.enabled;
+
         //disable player collider beforehand so boxcast doesn't return player
         collider.enabled = false;
 
         float boxAngle = 0;
         RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
-        collider.enabled = true;
+        collider.enabled = colliderEnabledCache;
 
         //check to see if the boxcast hit the the top of any object, if it did then we can use that to determine the player's local axis, and we can say he is grounded
         //if the boxcast doesn't return the tops of any objects then it might have hit an object that is right beside the player by accident, and we don't consider that as grounded
@@ -436,6 +439,10 @@ public class PlayerController : MonoBehaviour {
             cloneRigidBody.angularVelocity = Random.Range(-90, 90);
         }
 
+        //destoryy previous body if there is still a reference to it since it means that it wasn't destoryed yet
+        if (bodyCloneForDeathEffect != null)
+            GameObject.Destroy(bodyCloneForDeathEffect);
+
         //store a reference to the new body so it can be deleted later
         bodyCloneForDeathEffect = bodyCopy;
 
@@ -443,12 +450,20 @@ public class PlayerController : MonoBehaviour {
         //once player healthbar reaches 0 we can stop drawing player
         bodyParts.bodyRoot.SetActive(false);
 
+        //disable collider so he can't get shot again until he respawns
+        collider.enabled = false;
+
+        //disable rigid body so player won't move
+        body.simulated = false;
+
         //gameObject.SetActive(false);
         gameController.onPlayerDeath();
     }
 
     public void respawn() {
 
+        collider.enabled = true;
+        body.simulated = true;
         bodyParts.bodyRoot.SetActive(true);
         //gameObject.SetActive(true);
         healthManager.restoreHealth();
