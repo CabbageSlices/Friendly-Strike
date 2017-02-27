@@ -25,6 +25,10 @@ public class GameController : MonoBehaviour {
     //winners bonus for winning a round
     public int roundWinnersBonus;
 
+    //how long to wait to end a round once all teams but one are annhiliated
+    //in seconds
+    public float roundEndDelay;
+
     List<PlayerController> players = new List<PlayerController>();
 
     States currentState = States.Gameplay;
@@ -87,6 +91,22 @@ public class GameController : MonoBehaviour {
         return nextState;
     }
 
+    //exit current state  after waiting the given delay
+    //exit delay must be in seconds
+    //callback is a substitue for the function return value
+    //the argument passed to callback will be a return value specifying what state to transition to after the current state is finished
+    IEnumerator delayedExitState(float exitDelay, System.Action<States> callback) {
+
+        States nextState = States.StartUp;
+
+        if(currentState == States.Gameplay)
+            yield return new WaitForSeconds(exitDelay);
+
+        nextState = exitState();
+
+        callback(nextState);
+    }
+
     void assignScoreToTeams() {
 
         teamManager.addScoreToTeamWithLivingPlayers();
@@ -127,11 +147,13 @@ public class GameController : MonoBehaviour {
         if(currentState != States.Gameplay)
             Debug.LogWarning("onPlayerrDeath() called in state " + currentState.ToString());
 
-        //if there is only 1 team, or less, left with living players then matcch has ended
+        //if there is only 1 team, or less, left with living players then match has ended
         if(teamManager.getNumberOfTeamsWithLivingPlayers() <= 1) {
-
-            States next = exitState();
-            enterState(next);
+            
+            //wait before exiting the gameplay state
+            StartCoroutine(delayedExitState(roundEndDelay, (nextState) => {
+                enterState(nextState);}
+            ));
         }
     }
 }
