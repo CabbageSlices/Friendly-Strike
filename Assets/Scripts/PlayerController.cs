@@ -90,6 +90,8 @@ public class PlayerController : MonoBehaviour {
     //debugging, freezing or slowing down time
     public float timeScale;
 
+    public GameController gameController;
+
 	void Start () {
         
         if (body == null)
@@ -112,6 +114,8 @@ public class PlayerController : MonoBehaviour {
 
         if(statusDisplayBox == null)
             Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
+        
+        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
 
         Time.timeScale = timeScale;
 
@@ -131,7 +135,7 @@ public class PlayerController : MonoBehaviour {
     void subscribeToEvents() {
 
         healthManager.onZeroHealth += die;
-        healthManager.onHealthRestore += revive;
+        TeamScoreManager.onTeamScoreChange += handleTeamScoreChange;
 
         subscribeStatusDisplayBoxToEvents();
     }
@@ -149,7 +153,7 @@ public class PlayerController : MonoBehaviour {
     void unsubscribeFromEvents() {
 
         healthManager.onZeroHealth -= die;
-        healthManager.onHealthRestore -= revive;
+        TeamScoreManager.onTeamScoreChange -= handleTeamScoreChange;
 
         unsubscribeStatusDisplayBoxFromEvents();
     }
@@ -432,21 +436,38 @@ public class PlayerController : MonoBehaviour {
             cloneRigidBody.angularVelocity = Random.Range(-90, 90);
         }
 
+        //store a reference to the new body so it can be deleted later
+        bodyCloneForDeathEffect = bodyCopy;
+
         //disable player body so it isn't drawn, don't disable player game object  because we need healthbar to animate
         //once player healthbar reaches 0 we can stop drawing player
         bodyParts.bodyRoot.SetActive(false);
+
         //gameObject.SetActive(false);
+        gameController.onPlayerDeath();
     }
 
-    public void revive() {
+    public void respawn() {
 
         bodyParts.bodyRoot.SetActive(true);
-        gameObject.SetActive(true);
+        //gameObject.SetActive(true);
+        healthManager.restoreHealth();
 
         if (bodyCloneForDeathEffect != null)
             GameObject.Destroy(bodyCloneForDeathEffect);
 
         bodyCloneForDeathEffect = null;
+    }
+
+    public bool isAlive() {
+
+        return healthManager.getCurrentHealth() > 0;
+    }
+
+    public void receiveMoney(int amount) {
+
+        playerMoney += amount;
+        statusDisplayBox.setMoney(playerMoney);
     }
 
     void OnCollisionEnter2D(Collision2D collision) {
@@ -482,5 +503,12 @@ public class PlayerController : MonoBehaviour {
         statusDisplayBox.setScore(0);
 
         subscribeStatusDisplayBoxToEvents();
+    }
+
+    //when a team's score gets changed the status display box should reflect the change
+    public void handleTeamScoreChange(TeamProperties.Teams teamWhoseScoreWasChanged, int newScore) {
+
+        if(team == teamWhoseScoreWasChanged)
+            statusDisplayBox.setScore(newScore);
     }
 }

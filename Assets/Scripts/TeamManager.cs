@@ -47,6 +47,47 @@ public class TeamManager : MonoBehaviour {
         }
     }
 
+    public void addScoreToTeamWithLivingPlayers() {
+
+        var teamsWithLivingPlayers = getTeamsWithLivingPlayers();
+
+        foreach(var team in teamsWithLivingPlayers) {
+
+            TeamScoreManager.increaseScore(team);
+        }
+    }
+
+    public int getNumberOfTeamsWithLivingPlayers() {
+
+        var teamsWithLivingPlayers = getTeamsWithLivingPlayers();
+
+        return teamsWithLivingPlayers.Count;
+    }
+
+    //get a list of all the teams that have living players
+    List<TeamProperties.Teams> getTeamsWithLivingPlayers() {
+
+        List<TeamProperties.Teams> livingTeams = new List<TeamProperties.Teams>(); 
+
+        //go through each team
+        foreach (var entry in playersInTeams) {
+
+            //loop through all the players in this team and see if any are alive
+            List<PlayerController> players = entry.Value;
+            
+            foreach (var player in players) {
+
+                if (player.isAlive()) {
+
+                    livingTeams.Add(entry.Key);
+                    break;
+                }
+            }
+        }
+
+        return livingTeams;
+    }
+
     private void Start() {
 
         registerPlayersIntoChosenTeams();

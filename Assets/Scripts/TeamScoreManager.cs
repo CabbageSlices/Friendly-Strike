@@ -5,6 +5,9 @@ using UnityEngine;
 //keeps track of the scores of each team, and indicates when a team has reached the required score to win
 public static class TeamScoreManager {
 
+    public delegate void ScoreChangeEvent(TeamProperties.Teams team, int newScore);
+    public static event ScoreChangeEvent onTeamScoreChange;
+
     //score a team needs to win the game
     public static int requiredScoreToWin;
 
@@ -28,5 +31,14 @@ public static class TeamScoreManager {
 
             scoresForEachTeam[team] = 0;
         }
+    }
+
+    //increase the scor eof the given team
+    public static void increaseScore(TeamProperties.Teams team, int amount = 1) {
+
+        TeamScoreManager.scoresForEachTeam[team] += amount;
+
+        if(onTeamScoreChange != null)
+            onTeamScoreChange(team, TeamScoreManager.scoresForEachTeam[team]);
     }
 }

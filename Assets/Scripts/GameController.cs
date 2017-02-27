@@ -16,16 +16,122 @@ public class GameController : MonoBehaviour {
         ShutDown
     };
 
-    States currentState = States.StartUp;
+    public TeamManager teamManager;
+    public GameObject playersParent;
+
+    //minimum amount of money players will receive every round
+    public int basePayoutPerRound;
+
+    //winners bonus for winning a round
+    public int roundWinnersBonus;
+
+    List<PlayerController> players = new List<PlayerController>();
+
+    States currentState = States.Gameplay;
 
 	// Use this for initialization
 	void Start () {
 		
-        
+        if(teamManager == null)
+            Debug.LogWarning("teamManager reference in GameController is null");
+
+        if(playersParent == null)
+            Debug.LogWarning("PlayerParent reference in GameController is null");
+
+        getReferenceToPlayers();
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		
 	}
+
+    void getReferenceToPlayers() {
+
+        var playerControllerComponents = playersParent.GetComponentsInChildren<PlayerController>();
+
+        //add all playercontrollers to the list of players
+        foreach(var component in playerControllerComponents) {
+
+            players.Add(component as PlayerController);
+        }
+    }
+
+    void enterState(States next) {
+
+        if(currentState == States.Gameplay) {
+
+            //idk do something here to start the match, maybe post a START image or something
+            //startImage.enabled = true;
+        }
+    }
+
+    //exits the current state and returns the next state that should be entered
+    States exitState() {
+
+        States nextState = States.StartUp;
+
+        if(currentState == States.Gameplay) {
+
+            //round ended, assign money and scores
+            assignScoreToTeams();
+            givePlayersMoney();
+
+            //respawn players into random locations
+            respawnPlayers();
+
+            //go to shopping if match is still ongoing, go to winners screen if match ended
+            nextState = States.Gameplay;
+        }
+
+        return nextState;
+    }
+
+    void assignScoreToTeams() {
+
+        teamManager.addScoreToTeamWithLivingPlayers();
+    }
+
+    void givePlayersMoney() {
+
+        //loop through all the players andd calculate how much they earned from the last round
+        foreach(PlayerController player in players) {
+
+            int payout = calculatePayoutForPlayer(player);
+            player.receiveMoney(payout);
+        }
+    }
+
+    void respawnPlayers() {
+
+        foreach(PlayerController player in players) {
+
+            player.respawn();
+        }
+    }
+
+    //calculate how much money to pay the eplayer at the end of the current round
+    //round should be finished by now
+    int calculatePayoutForPlayer(PlayerController player) {
+        
+        int payOut = basePayoutPerRound;
+        payOut += player.isAlive() ? roundWinnersBonus : 0;
+
+        return payOut;
+    }
+
+    //called by players whenever they die
+    public void onPlayerDeath() {
+
+        //shouldn't happen outside of gameplay state
+        if(currentState != States.Gameplay)
+            Debug.LogWarning("onPlayerrDeath() called in state " + currentState.ToString());
+
+        //if there is only 1 team, or less, left with living players then matcch has ended
+        if(teamManager.getNumberOfTeamsWithLivingPlayers() <= 1) {
+
+            States next = exitState();
+            enterState(next);
+        }
+    }
 }

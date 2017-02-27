@@ -8,10 +8,10 @@ public class HealthManager : MonoBehaviour {
     public delegate void HealthChangeEvent(int newHealth);
 
     public event HealthEvent onZeroHealth;//called when health reaches 0
-    public event HealthEvent onHealthRestore;//called when health is restored to full health
+    //public event HealthEvent onHealthRestore;//called when health is restored to full health
     public event HealthChangeEvent onHealthChange;//called when player's health changes value somehow
-
-    public int initialHealth = 100;
+    
+    public int initialHealth;
     public HealthBarManager healthBarManager;//script that handles the healthbar UI changes
 
     private int currentHealth;
@@ -66,9 +66,6 @@ public class HealthManager : MonoBehaviour {
            
         if(onHealthChange != null)
             onHealthChange(currentHealth);
-
-        if(onHealthRestore != null)
-            onHealthRestore();
         
         updateHealthBar();
     }
