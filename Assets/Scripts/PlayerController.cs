@@ -209,7 +209,7 @@ public class PlayerController : MonoBehaviour {
             velocity.y = jumpSpeed;
         }
 
-        if(Input.GetButtonDown("Reload" + controllerId) && weaponManager.canReload()) {
+        if(Input.GetButtonDown("Reload" + controllerId) && canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
