@@ -64,17 +64,20 @@ AnimatorController:
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
   - serializedVersion: 5
-    m_Name: ArmsLargeGun
+    m_Name: ArmsSMG
     m_StateMachine: {fileID: 1107000010738296856}
     m_Mask: {fileID: 0}
     m_Motions:
     - serializedVersion: 2
       m_State: {fileID: 1102000013474416918}
-      m_Motion: {fileID: 7400000, guid: 26d124707a9cb1749ad22986b613cd65, type: 2}
+      m_Motion: {fileID: 7400000, guid: 68953bcc8ac2cf54c9b21c6e404611c6, type: 2}
+    - serializedVersion: 2
+      m_State: {fileID: 1102000012917694846}
+      m_Motion: {fileID: 7400000, guid: 03093e500ee3005479996b8eb24e97d1, type: 2}
     m_Behaviours: []
     m_BlendingMode: 0
     m_SyncedLayerIndex: 1
-    m_DefaultWeight: 0
+    m_DefaultWeight: 1
     m_IKPass: 0
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
@@ -626,7 +629,7 @@ AnimatorState:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: Fire
-  m_Speed: 1
+  m_Speed: 2
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 1101000010132702582}
@@ -821,7 +824,7 @@ AnimatorStateMachine:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: ArmsLargeGun
+  m_Name: ArmsSMG
   m_ChildStates: []
   m_ChildStateMachines: []
   m_AnyStateTransitions: []

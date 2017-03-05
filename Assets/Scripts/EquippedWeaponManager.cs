@@ -46,7 +46,15 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     void getReferenceToEquippedGun() {
 
-        Transform gunTransform = playerBodyParts.rightHand.transform.Find("Gun");
+        Transform gunTransform = null;
+
+        foreach(Transform child in playerBodyParts.rightHand.transform) {
+
+            if(child.tag == "Gun")
+                gunTransform = child;
+
+            break;
+        }
 
         //no equipped gun, no need to find references
         if (gunTransform == null)
@@ -75,12 +83,12 @@ public class EquippedWeaponManager : MonoBehaviour {
         return angleOffset;
     }
 
-    //resets the local position/rotation/scale of the gun cartridge
-    void resetCartridgeTransform() {
+    //put cartridge back to its initial position relative to the gun
+    void connectCartridgeToGun() {
 
-        equippedWeapon.parts.cartridge.transform.localPosition = new Vector3(0, 0, 0);
-        equippedWeapon.parts.cartridge.transform.localScale = new Vector3(1, 1, 1);
-        equippedWeapon.parts.cartridge.transform.localRotation = Quaternion.identity;
+        equippedWeapon.parts.cartridge.transform.localPosition = equippedWeapon.properties.initialCartridgePosition;
+        equippedWeapon.parts.cartridge.transform.localScale = equippedWeapon.properties.initialCartridgeScale;
+        equippedWeapon.parts.cartridge.transform.localRotation = equippedWeapon.properties.initialCartridgeRotation;
     }
 
     //moves cartridge from gun to left hand for the reloading animation
@@ -90,7 +98,10 @@ public class EquippedWeaponManager : MonoBehaviour {
             return;
 
         equippedWeapon.parts.cartridge.transform.parent = playerBodyParts.leftHand.transform;
-        resetCartridgeTransform();
+
+        equippedWeapon.parts.cartridge.transform.localPosition = new Vector3(0, 0, 0);
+        equippedWeapon.parts.cartridge.transform.localScale = new Vector3(1, 1, 1);
+        equippedWeapon.parts.cartridge.transform.localRotation = Quaternion.Euler(0, 0, 0);
     }
 
     //moves cartridge from left hand back to the gun
@@ -101,7 +112,7 @@ public class EquippedWeaponManager : MonoBehaviour {
 
         equippedWeapon.parts.cartridge.transform.parent = equippedWeapon.parts.gunBody.transform;
 
-        resetCartridgeTransform();
+        connectCartridgeToGun();
     }
 
     public GameObject getPartOfGunToAim() {

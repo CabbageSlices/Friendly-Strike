@@ -18,6 +18,19 @@ public class GunProperties : MonoBehaviour {
     //bullet that should be produced by this gun when it fires
     public GameObject bullet;
 
+    //cartridge attached to this gun
+    //used to get the initial position/rotation/scale of the cartridge that way when the player does a reloading animation he can
+    //use the stored values of the position/rotation/scale to put the cartridge back into the gun
+    public GameObject cartridge;
+
+    //initial position/rotation/scale of the cartrdige RELATIVE TO THE GUN BODY
+    [HideInInspector]
+    public Vector3 initialCartridgePosition;
+    [HideInInspector]
+    public Vector3 initialCartridgeScale;
+    [HideInInspector]
+    public Quaternion initialCartridgeRotation;
+
     //how much a bullet deviates from the angle that the gun is aimed at
     //bullets will be fired at an angle in the range [gunAngle - bulletSpread, gunAngle + bulletSpread]
     //this angle should be in DEGREES
@@ -25,6 +38,10 @@ public class GunProperties : MonoBehaviour {
     public float bulletSpread;
 
     void Start() {
+
+        initialCartridgePosition = cartridge.transform.localPosition;
+        initialCartridgeScale = cartridge.transform.localScale;
+        initialCartridgeRotation = cartridge.transform.localRotation;
 
         remainingBullets = bulletsInMagazine;
         lastFiredTime = -fireDelay;
