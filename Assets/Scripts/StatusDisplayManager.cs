@@ -48,6 +48,10 @@ public class StatusDisplayManager : MonoBehaviour {
         if (playersParent== null)
             Debug.LogWarning("StatusDisplayManager script missing playersParent reference");
 
-        assignStatusDisplayBoxesToPlayers();
+        //DO NOT ASSIGN A DISPLAY BOX IN THE START FUNCTION
+        //NOT ALL GAME OBJECTS ARE GUARANTEED TO HAVE RUN THEIR START ROUTINE
+        //this means that player's stats may not be initialized, (such as teams or health), and the status display box will be missing information
+        //do this in the game controllers startUp state
+        //assignStatusDisplayBoxesToPlayers();
     }
 }

@@ -8,6 +8,7 @@ public class GameController : MonoBehaviour {
 
     enum States {
 
+        NULL,
         StartUp,
         Shopping,
         Gameplay,
@@ -29,9 +30,11 @@ public class GameController : MonoBehaviour {
     //in seconds
     public float roundEndDelay;
 
+    public StatusDisplayManager statusDisplayManager;
+
     List<PlayerController> players = new List<PlayerController>();
 
-    States currentState = States.Gameplay;
+    States currentState = States.NULL;
 
 	// Use this for initialization
 	void Start () {
@@ -42,12 +45,20 @@ public class GameController : MonoBehaviour {
         if(playersParent == null)
             Debug.LogWarning("PlayerParent reference in GameController is null");
 
+        if (statusDisplayManager == null)
+            Debug.LogWarning("statusDisplayManager reference in GameController is null");
+
         getReferenceToPlayers();
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		
+        if(currentState == States.NULL) {
+
+            enterState(States.StartUp);
+            enterState(States.Gameplay);
+        }
 	}
 
     void getReferenceToPlayers() {
@@ -63,11 +74,18 @@ public class GameController : MonoBehaviour {
 
     void enterState(States next) {
 
+        if(currentState == States.StartUp) {
+
+            statusDisplayManager.assignStatusDisplayBoxesToPlayers();
+        }
+
         if(currentState == States.Gameplay) {
 
             //idk do something here to start the match, maybe post a START image or something
             //startImage.enabled = true;
         }
+
+        currentState = next;
     }
 
     //exits the current state and returns the next state that should be entered
