@@ -212,15 +212,23 @@ public class PlayerController : MonoBehaviour {
         //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair 
         //we need to make sure player isn't jumping because he might have started jumping but he might be close enough to the ground to be eregistered as grounded
         //in which case we can't disable velocity or player will never go up
-        if (isGroundedCached && !isJumping)
+        if (isGroundedCached && !isJumping) {
+
             velocity.y = 0;
+        }
+            
 
         //calculate the velocity player should have when moving across the surface of the ground he is standing on
         Vector2 horizontalVelocity = localHorizontalDirection * valueHorizontalAxis * speed;
 
+        //override local horizontal direction if player is jumping, because if he is jumping but he hasn't left the ground yet then local horizontal direction
+        //might point upwards still, so his jump button and his left/right button will  cause him to go upwards with a very large velocity
+        if(isJumping)
+            horizontalVelocity = new Vector2(1, 0) * valueHorizontalAxis * speed;
+
         velocity += horizontalVelocity;
 
-        if (Input.GetButtonDown("Jump" + controllerId) && isGroundedCached) {
+        if (Input.GetButtonDown("Jump" + controllerId) && canJump(isGroundedCached)) {
 
             isJumping = true;
             velocity.y = jumpSpeed;
@@ -253,6 +261,11 @@ public class PlayerController : MonoBehaviour {
     bool canFire() {
 
         return animator.GetCurrentAnimatorStateInfo(1).fullPathHash != animationHashCodes.pistolReloadingStateKey && weaponManager.canFire();
+    }
+
+    bool canJump(bool isGroundedCached) {
+
+        return isGroundedCached && !isJumping;
     }
 
     //plays the fire animation, creates a bullet
@@ -402,8 +415,8 @@ public class PlayerController : MonoBehaviour {
         foreach (var hitBelowPlayer in objectsBelowPlayer) {
 
             //normal points slightly upwards
-            if (hitBelowPlayer.normal.y > 0.1) {
-
+            if (hitBelowPlayer.normal.y > 0.2) {
+                
                 objectBelowPlayer = hitBelowPlayer;
                 break;
             }
@@ -521,12 +534,14 @@ public class PlayerController : MonoBehaviour {
         //if the colliding object isn't soemthign the player can stand on, then ignore it
         if (((1 << collision.gameObject.layer) & raycastLayers.value) == 0)
             return;
-
+        
         //if player is going upwards then he might have passed through a one way platform so he is still jumping
         //don't comment this out becaues it will cause infinite jumping if player starts moving up a slope and jumps,
         //but lands on the slope again while he is still goign upwards
         /*if(body.velocity.y > 0)
             return;*/
+
+        Debug.Log("Disabled");
 
         //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
         isJumping = false;

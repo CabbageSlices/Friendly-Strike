@@ -157,6 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f63978e3819e7204cb8ccde160fef387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weaponType: 2
   bulletsInMagazine: 100
   remainingBullets: 100
   fireDelay: 0.1

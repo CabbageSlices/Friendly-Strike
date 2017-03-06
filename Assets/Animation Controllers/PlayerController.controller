@@ -59,7 +59,7 @@ AnimatorController:
     m_Behaviours: []
     m_BlendingMode: 0
     m_SyncedLayerIndex: -1
-    m_DefaultWeight: 1
+    m_DefaultWeight: 0
     m_IKPass: 0
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
@@ -74,6 +74,9 @@ AnimatorController:
     - serializedVersion: 2
       m_State: {fileID: 1102000012917694846}
       m_Motion: {fileID: 7400000, guid: 03093e500ee3005479996b8eb24e97d1, type: 2}
+    - serializedVersion: 2
+      m_State: {fileID: 1102000013865809164}
+      m_Motion: {fileID: 7400000, guid: 2346c9f6b3dead64ea056de0e7cb064e, type: 2}
     m_Behaviours: []
     m_BlendingMode: 0
     m_SyncedLayerIndex: 1

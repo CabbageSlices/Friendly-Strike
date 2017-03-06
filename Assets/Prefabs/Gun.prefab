@@ -71,7 +71,7 @@ GameObject:
   - component: {fileID: 114000010317695172}
   m_Layer: 0
   m_Name: Gun
-  m_TagString: Untagged
+  m_TagString: Gun
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -187,6 +187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f63978e3819e7204cb8ccde160fef387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weaponType: 1
   bulletsInMagazine: 10
   remainingBullets: 10
   fireDelay: 0.45
