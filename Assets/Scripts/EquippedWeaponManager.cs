@@ -125,6 +125,14 @@ public class EquippedWeaponManager : MonoBehaviour {
         return equippedWeapon.gunElevationAbovePlayerHands;
     }
 
+    public GunProperties.Type getTypeOfEquippedWeapon() {
+
+        if(equippedWeapon.gun == null)
+            return GunProperties.Type.Pistol;
+
+        return equippedWeapon.properties.weaponType;
+    }
+
     public bool canReload() {
 
         if (equippedWeapon.gun == null)

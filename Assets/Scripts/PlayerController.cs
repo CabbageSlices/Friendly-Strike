@@ -21,6 +21,16 @@ public class PlayerController : MonoBehaviour {
         public int IsGroundedKey = Animator.StringToHash("IsGrounded");
     }
 
+    //player's arms are animated accordign to the weapon he is holding
+    //each type of weapon corresponds to a different animation layer, and we want to disable all arm animation layers except the layer corresponding to the equipped weapon
+    //map each type of weapon to an animation layer id
+    //remember that layer 0 is for the players  body, and will always play regardless of the type of weapon he is holding
+    Dictionary<GunProperties.Type, int> gunTypeToLayer = new Dictionary<GunProperties.Type, int>() {
+
+        { GunProperties.Type.Pistol, 1},
+        { GunProperties.Type.SMG, 2}
+    };
+
     //isGrounded does a boxcast beneath the player to check for platforms
     //this distance is the maximum distance to cast the box
     private float isGroundedBoxCastDistance = 0.2f;
@@ -44,7 +54,7 @@ public class PlayerController : MonoBehaviour {
     //needed to distinguish between player walking off a platform, and player jumping
     //if player jumps he should play jumping animation, if player walks off platform (isGroudned = false) then he should play falling animation
     private bool isJumping = false;
-    
+
     //which direction the player will move in if he presses the left or right button
     //this will change when the player stands on different slopes in order to becoem parallel to the slope
     //when he isn't standing on anything or standing on a flat surface the local axis should align with the global right axis
@@ -56,19 +66,25 @@ public class PlayerController : MonoBehaviour {
     private float defaultGravity;
 
     //object's own components, way to cache the object returned by GetComponent
-    [SerializeField]private Rigidbody2D body; 
-    [SerializeField]new private BoxCollider2D collider;
-    [SerializeField]private Animator animator;
+    [SerializeField]
+    private Rigidbody2D body;
+    [SerializeField]
+    new private BoxCollider2D collider;
+    [SerializeField]
+    private Animator animator;
 
-    [SerializeField]private EquippedWeaponManager weaponManager;//used to handle weapon control
-    [SerializeField]private PlayerBodyParts bodyParts;//body parts of the player
+    [SerializeField]
+    private EquippedWeaponManager weaponManager;//used to handle weapon control
+    [SerializeField]
+    private PlayerBodyParts bodyParts;//body parts of the player
 
     //reference to the player's status display box
     public StatusDisplayBoxController statusDisplayBox;
 
     public float speed = 5;
     public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
-    [Range(10, 100)]public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
+    [Range(10, 100)]
+    public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
 
     //health manager reference
     public HealthManager healthManager;
@@ -92,14 +108,14 @@ public class PlayerController : MonoBehaviour {
 
     public GameController gameController;
 
-	void Start () {
-        
+    void Start() {
+
         if (body == null)
             Debug.LogWarning("playerController script has no Rigidbody2D reference (body is null)");
 
         if (collider == null)
             Debug.LogWarning("playerController script has no BoxCollider2D reference (collider is null)");
-        
+
         if (animator == null)
             Debug.LogWarning("playerController script has no Animator reference (animator is null)");
 
@@ -112,9 +128,9 @@ public class PlayerController : MonoBehaviour {
         if (healthManager == null)
             Debug.LogWarning("PlayerController missing healthManager reference");
 
-        if(statusDisplayBox == null)
+        if (statusDisplayBox == null)
             Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
-        
+
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
 
         Time.timeScale = timeScale;
@@ -143,7 +159,7 @@ public class PlayerController : MonoBehaviour {
     //make status display box track different events so that the values in the box are updated automatically
     void subscribeStatusDisplayBoxToEvents() {
 
-        if(statusDisplayBox == null)
+        if (statusDisplayBox == null)
             return;
 
         healthManager.onHealthChange += statusDisplayBox.setHealth;
@@ -157,10 +173,10 @@ public class PlayerController : MonoBehaviour {
 
         unsubscribeStatusDisplayBoxFromEvents();
     }
-	
+
     void unsubscribeStatusDisplayBoxFromEvents() {
 
-        if(statusDisplayBox == null)
+        if (statusDisplayBox == null)
             return;
 
         healthManager.onHealthChange -= statusDisplayBox.setHealth;
@@ -168,7 +184,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update () {
+    void Update() {
 
         bool isGroundedCached = isGrounded();
         handleInput(isGroundedCached);
@@ -180,6 +196,7 @@ public class PlayerController : MonoBehaviour {
         animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
         animator.SetBool(animationHashCodes.IsGroundedKey, isGroundedCached && !isJumping);
 
+        determineGunAnimation();
         determineSpriteDirection();
         determineSpriteArmOrientation();
     }
@@ -209,12 +226,12 @@ public class PlayerController : MonoBehaviour {
             velocity.y = jumpSpeed;
         }
 
-        if(Input.GetButtonDown("Reload" + controllerId) && canReload()) {
+        if (Input.GetButtonDown("Reload" + controllerId) && canReload()) {
 
             animator.SetTrigger(animationHashCodes.reloadTriggerKey);
         }
-        
-        if(Input.GetButton("Fire" + controllerId) && canFire()) {
+
+        if (Input.GetButton("Fire" + controllerId) && canFire()) {
 
             fire();
 
@@ -246,6 +263,20 @@ public class PlayerController : MonoBehaviour {
 
     }
 
+    //determine which animation layer to use for the current equipped gun
+    //enables the corresponding layer and disables all the rest
+    void determineGunAnimation() {
+
+        //first disable all layers to begin with
+        foreach (GunProperties.Type type in gunTypeToLayer.Keys) {
+
+            animator.SetLayerWeight((int)type, 0.0f);
+        }
+
+        //enable the layer that corresponds to the current weapon
+        animator.SetLayerWeight(gunTypeToLayer[weaponManager.getTypeOfEquippedWeapon()], 100.0f);
+    }
+
     //flip the player's sprite to the left or right depending on which way he is moving
     void determineSpriteDirection() {
 
@@ -253,7 +284,7 @@ public class PlayerController : MonoBehaviour {
         Vector3 previousScale = bodyParts.bodyRoot.transform.localScale;
 
         //multiply scale by -1 to set the correct sign, that way if player was scaled then his size remains the same
-        if ((body.velocity.x < 0 && previousScale.x > 0) || (body.velocity.x > 0 && previousScale.x < 0) ) {
+        if ((body.velocity.x < 0 && previousScale.x > 0) || (body.velocity.x > 0 && previousScale.x < 0)) {
 
             previousScale.x *= -1;
         }
@@ -267,7 +298,7 @@ public class PlayerController : MonoBehaviour {
     void calculateVectorToTarget() {
 
         //for keyboard/mouse user
-        if(controllerId == 0) {
+        if (controllerId == 0) {
 
             aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
             return;
@@ -283,7 +314,7 @@ public class PlayerController : MonoBehaviour {
         //rawAxis is used because the inputManager's deadzones will output 0 for values at the edge of the deadzone, and i don't want
         //to have values of 0 outside of my deadzone, i want the actual value of the controller.
         float deadzone = 0.15f;
-        if(currentAxisValue.sqrMagnitude > deadzone * deadzone)
+        if (currentAxisValue.sqrMagnitude > deadzone * deadzone)
             aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal" + controllerId), Input.GetAxis("AimVertical" + controllerId));
     }
 
@@ -330,7 +361,7 @@ public class PlayerController : MonoBehaviour {
         if (bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime*aimSensitivity) ;
+        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * aimSensitivity);
         Debug.DrawRay(bodyParts.arms.transform.position, aimTargetPosition, Color.red);
 
     }
@@ -344,7 +375,7 @@ public class PlayerController : MonoBehaviour {
         Vector2 boxOrigin = collider.bounds.center;
         boxOrigin.y -= collider.bounds.extents.y;
 
-        float pixelToUnit = 1.0f/64.0f;
+        float pixelToUnit = 1.0f / 64.0f;
 
         Vector2 boxSize = collider.bounds.size;
         boxSize.y = pixelToUnit;//1 unit height
@@ -368,10 +399,10 @@ public class PlayerController : MonoBehaviour {
         //if the boxcast doesn't return the tops of any objects then it might have hit an object that is right beside the player by accident, and we don't consider that as grounded
         RaycastHit2D objectBelowPlayer = new RaycastHit2D();
 
-        foreach(var hitBelowPlayer in objectsBelowPlayer) {
+        foreach (var hitBelowPlayer in objectsBelowPlayer) {
 
             //normal points slightly upwards
-            if(hitBelowPlayer.normal.y > 0.1) {
+            if (hitBelowPlayer.normal.y > 0.1) {
 
                 objectBelowPlayer = hitBelowPlayer;
                 break;
@@ -420,8 +451,8 @@ public class PlayerController : MonoBehaviour {
 
         //now find all body parts that have a sprite renderer and are tagged player, since these are the parts that can make up the explosion effect
         Component[] childrenWithSprites = bodyCopy.GetComponentsInChildren<SpriteRenderer>();
-        
-        foreach(Component component in childrenWithSprites) {
+
+        foreach (Component component in childrenWithSprites) {
 
             //ignore anything not tagged player because it could be some other children like a gun or something
             if (!component.gameObject.CompareTag("PlayerBodyPart"))
@@ -488,7 +519,7 @@ public class PlayerController : MonoBehaviour {
     void OnCollisionEnter2D(Collision2D collision) {
 
         //if the colliding object isn't soemthign the player can stand on, then ignore it
-        if( ((1 << collision.gameObject.layer) & raycastLayers.value) == 0) 
+        if (((1 << collision.gameObject.layer) & raycastLayers.value) == 0)
             return;
 
         //if player is going upwards then he might have passed through a one way platform so he is still jumping
@@ -523,7 +554,7 @@ public class PlayerController : MonoBehaviour {
     //when a team's score gets changed the status display box should reflect the change
     public void handleTeamScoreChange(TeamProperties.Teams teamWhoseScoreWasChanged, int newScore) {
 
-        if(team == teamWhoseScoreWasChanged)
+        if (team == teamWhoseScoreWasChanged)
             statusDisplayBox.setScore(newScore);
     }
 }

@@ -4,6 +4,15 @@ using System.Collections;
 //class that keeps track of all the properties of a given gun, such as ammo, fire rate, etc
 public class GunProperties : MonoBehaviour {
 
+    //weapon type lets player determine what type of animation to play for this weapon
+    public enum Type {
+
+        Pistol = 1,
+        SMG
+    };
+
+    public Type weaponType;
+
     public int bulletsInMagazine;
     public int remainingBullets;
 
