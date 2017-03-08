@@ -3,6 +3,7 @@ using System.Collections;
 
 //This class will manage a player's equipped weapon
 //It will handle the user's input for the weapon, player's firing, reloading, and changing weapons
+//  MUST BE A COMPONENT OF PLAYER BODY BECAUSE THE PLAYER BODY ANIMATIONS NEED TO CALL ANIMATIONS EVENTS FROM THIS  CLASS
 public class EquippedWeaponManager : MonoBehaviour {
 
     public delegate void EquipWeapon(GunProperties.Type type);

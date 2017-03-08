@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(PlayerAnimationController))]
+[RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : MonoBehaviour {
 
     //isGrounded does a boxcast beneath the player to check for platforms
@@ -37,28 +39,11 @@ public class PlayerController : MonoBehaviour {
     //when player jumps or falls off a platform we reset gravity to whatever it was initially
     private float defaultGravity;
 
-    //object's own components, way to cache the object returned by GetComponent
     [SerializeField]
-    private Rigidbody2D body;
-
-    [SerializeField]
-    new private BoxCollider2D collider;
-
-    [SerializeField]
-    PlayerAnimationController animationController;
-
-    [SerializeField]
-    PlayerInputHandler inputHandler;
-
-    [SerializeField]
-    private EquippedWeaponManager weaponManager;//used to handle weapon control
-
-    [SerializeField]
-    private PlayerBodyParts bodyParts;//body parts of the player
+    private PlayerComponentReferences componentReferences;
 
     [SerializeField]
     public PlayerGameplayProperties gameplayProperties;
-
 
     //health manager reference
     public HealthManager healthManager;
@@ -77,16 +62,16 @@ public class PlayerController : MonoBehaviour {
 
     void Start() {
 
-        if (body == null)
+        if (componentReferences.body == null)
             Debug.LogWarning("playerController script has no Rigidbody2D reference (body is null)");
 
-        if (collider == null)
+        if (componentReferences.collider == null)
             Debug.LogWarning("playerController script has no BoxCollider2D reference (collider is null)");
 
-        if (weaponManager == null)
+        if (componentReferences.weaponManager == null)
             Debug.LogWarning("playerController script has no EquippedWeaponManager reference (weaponManager is null)");
 
-        if (bodyParts == null)
+        if (componentReferences.bodyParts == null)
             Debug.LogWarning("playercontroller missing bodyParts refernece");
 
         if (healthManager == null)
@@ -95,16 +80,14 @@ public class PlayerController : MonoBehaviour {
         if (statusDisplayBox == null)
             Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
 
-        animationController = GetComponent<PlayerAnimationController>() as PlayerAnimationController;
-        inputHandler = GetComponent<PlayerInputHandler>() as PlayerInputHandler;
-
-        animationController.useAnimationForGun(GunProperties.Type.Pistol);
+        componentReferences.animationController = GetComponent<PlayerAnimationController>() as PlayerAnimationController;
+        componentReferences.inputHandler = GetComponent<PlayerInputHandler>() as PlayerInputHandler;
 
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
 
         Time.timeScale = timeScale;
 
-        defaultGravity = body.gravityScale;
+        defaultGravity = componentReferences.body.gravityScale;
     }
 
     void OnEnable() {
@@ -122,10 +105,10 @@ public class PlayerController : MonoBehaviour {
         healthManager.onZeroHealth += die;
         TeamScoreManager.onTeamScoreChange += handleTeamScoreChange;
 
-        inputHandler.onJumpPress += jump;
-        inputHandler.onFirePress += fire;
-        inputHandler.onReloadPress += reload;
-        weaponManager.onEquipWeapon += animationController.useAnimationForGun;
+        componentReferences.inputHandler.onJumpPress += jump;
+        componentReferences.inputHandler.onFirePress += fire;
+        componentReferences.inputHandler.onReloadPress += reload;
+        componentReferences.weaponManager.onEquipWeapon += componentReferences.animationController.useAnimationForGun;
 
         subscribeStatusDisplayBoxToEvents();
     }
@@ -137,7 +120,7 @@ public class PlayerController : MonoBehaviour {
             return;
 
         healthManager.onHealthChange += statusDisplayBox.setHealth;
-        weaponManager.onAmmoChange += statusDisplayBox.setAmmo;
+        componentReferences.weaponManager.onAmmoChange += statusDisplayBox.setAmmo;
     }
 
     void unsubscribeFromEvents() {
@@ -145,10 +128,10 @@ public class PlayerController : MonoBehaviour {
         healthManager.onZeroHealth -= die;
         TeamScoreManager.onTeamScoreChange -= handleTeamScoreChange;
 
-        inputHandler.onJumpPress -= jump;
-        inputHandler.onFirePress -= fire;
-        inputHandler.onReloadPress -= reload;
-        weaponManager.onEquipWeapon -= animationController.useAnimationForGun;
+        componentReferences.inputHandler.onJumpPress -= jump;
+        componentReferences.inputHandler.onFirePress -= fire;
+        componentReferences.inputHandler.onReloadPress -= reload;
+        componentReferences.weaponManager.onEquipWeapon -= componentReferences.animationController.useAnimationForGun;
 
         unsubscribeStatusDisplayBoxFromEvents();
     }
@@ -159,7 +142,7 @@ public class PlayerController : MonoBehaviour {
             return;
 
         healthManager.onHealthChange -= statusDisplayBox.setHealth;
-        weaponManager.onAmmoChange -= statusDisplayBox.setAmmo;
+        componentReferences.weaponManager.onAmmoChange -= statusDisplayBox.setAmmo;
     }
 
     // Update is called once per frame
@@ -169,11 +152,11 @@ public class PlayerController : MonoBehaviour {
         handleInput(isGroundedCached);
 
         if (!isGroundedCached || isJumping)
-            body.gravityScale = defaultGravity;
+            componentReferences.body.gravityScale = defaultGravity;
 
-        animationController.setJumpVelocityParameter(body.velocity.y);
-        animationController.setIsGroundedParameter(isGroundedCached && !isJumping);
-        animationController.setIsWalkingParameter(body.velocity.x != 0);
+        componentReferences.animationController.setJumpVelocityParameter(componentReferences.body.velocity.y);
+        componentReferences.animationController.setIsGroundedParameter(isGroundedCached && !isJumping);
+        componentReferences.animationController.setIsWalkingParameter(componentReferences.body.velocity.x != 0);
         
         determineSpriteDirection();
         determineSpriteArmOrientation();
@@ -182,9 +165,9 @@ public class PlayerController : MonoBehaviour {
     //reads the player's input to determine his movement and orientation
     void handleInput(bool isGroundedCached) {
 
-        float valueHorizontalAxis = inputHandler.getValueHorizontalAxis();
+        float valueHorizontalAxis = componentReferences.inputHandler.getValueHorizontalAxis();
 
-        Vector2 velocity = new Vector2(0, body.velocity.y);
+        Vector2 velocity = new Vector2(0, componentReferences.body.velocity.y);
 
         //when player is grounded and not jumping we don't need a y velocity since he is on the ground and isn't trying to go upwards
         //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair 
@@ -205,19 +188,19 @@ public class PlayerController : MonoBehaviour {
 
         velocity += horizontalVelocity;
 
-        aimTargetPosition = inputHandler.calculateAimVector(aimTargetPosition, bodyParts.arms.transform.position);
+        aimTargetPosition = componentReferences.inputHandler.calculateAimVector(aimTargetPosition, componentReferences.bodyParts.arms.transform.position);
 
-        body.velocity = velocity;
+        componentReferences.body.velocity = velocity;
     }
 
     bool canReload() {
 
-        return weaponManager.canReload() && animationController.isAiming();
+        return componentReferences.weaponManager.canReload() && componentReferences.animationController.isAiming();
     }
 
     bool canFire() {
 
-        return animationController.isAiming() && weaponManager.canFire();
+        return componentReferences.animationController.isAiming() && componentReferences.weaponManager.canFire();
     }
 
     bool canJump(bool isGroundedCached) {
@@ -232,10 +215,10 @@ public class PlayerController : MonoBehaviour {
 
         if (fire) {
 
-            weaponManager.fire(angleToFireBullets, gameplayProperties.team);
+            componentReferences.weaponManager.fire(angleToFireBullets, gameplayProperties.team);
         }
 
-        animationController.setFireParameter(fire);
+        componentReferences.animationController.setFireParameter(fire);
     }
 
     //the current ccalculated velocity of the player this frame
@@ -244,7 +227,7 @@ public class PlayerController : MonoBehaviour {
         if(canJump(isGrounded())) {
 
             isJumping = true;
-            body.velocity = new Vector2(body.velocity.x, gameplayProperties.jumpSpeed);
+            componentReferences.body.velocity = new Vector2(componentReferences.body.velocity.x, gameplayProperties.jumpSpeed);
         }
     }
 
@@ -252,7 +235,7 @@ public class PlayerController : MonoBehaviour {
 
         if(canReload()) {
 
-            animationController.playReloadAnimation();
+            componentReferences.animationController.playReloadAnimation();
         }
     }
 
@@ -260,15 +243,15 @@ public class PlayerController : MonoBehaviour {
     void determineSpriteDirection() {
 
         //when player is moving left, scale body by -1 to make it face left, otherwise make the scale +1 to face right
-        Vector3 previousScale = bodyParts.bodyRoot.transform.localScale;
+        Vector3 previousScale = componentReferences.bodyParts.bodyRoot.transform.localScale;
 
         //multiply scale by -1 to set the correct sign, that way if player was scaled then his size remains the same
-        if ((body.velocity.x < 0 && previousScale.x > 0) || (body.velocity.x > 0 && previousScale.x < 0)) {
+        if ((componentReferences.body.velocity.x < 0 && previousScale.x > 0) || (componentReferences.body.velocity.x > 0 && previousScale.x < 0)) {
 
             previousScale.x *= -1;
         }
 
-        bodyParts.bodyRoot.transform.localScale = previousScale;
+        componentReferences.bodyParts.bodyRoot.transform.localScale = previousScale;
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -290,12 +273,12 @@ public class PlayerController : MonoBehaviour {
 
         //determine if the arms should be mirrored or not, arms are only mirrored if player is aiming in direction opposite to his arms current orientation
         //they're facing in different directions if their signs are different
-        if (bodyParts.arms.transform.lossyScale.x * aimTargetPosition.x < 0) {
+        if (componentReferences.bodyParts.arms.transform.lossyScale.x * aimTargetPosition.x < 0) {
 
-            Vector3 scale = bodyParts.arms.transform.localScale;
+            Vector3 scale = componentReferences.bodyParts.arms.transform.localScale;
             scale.x *= -1;
 
-            bodyParts.arms.transform.localScale = scale;
+            componentReferences.bodyParts.arms.transform.localScale = scale;
         }
 
         //calcualte the angle above the horizontal of the arm
@@ -304,18 +287,18 @@ public class PlayerController : MonoBehaviour {
         angleToFireBullets = Mathf.Atan2(aimTargetPosition.y, aimTargetPosition.x);//this angle is different from the angle used to rotate the arms
         //Since angleToFireBullets is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
-        angle -= weaponManager.getGunElevationAbovePlayerHands();
+        angle -= componentReferences.weaponManager.getGunElevationAbovePlayerHands();
 
         //if user is reloading then disable aiming so it doesn't mess up the reloading animation
-        if (animationController.isReloading())
+        if (componentReferences.animationController.isReloading())
             angle = 0;
 
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
-        if (bodyParts.arms.transform.lossyScale.x < 0)
+        if (componentReferences.bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * gameplayProperties.aimSensitivity);
-        Debug.DrawRay(bodyParts.arms.transform.position, aimTargetPosition, Color.red);
+        componentReferences.bodyParts.arms.transform.rotation = Quaternion.Slerp(componentReferences.bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * gameplayProperties.aimSensitivity);
+        Debug.DrawRay(componentReferences.bodyParts.arms.transform.position, aimTargetPosition, Color.red);
 
     }
 
@@ -325,12 +308,12 @@ public class PlayerController : MonoBehaviour {
 
         //player is grounded if there is something below him (distance to object beneath him must be really small)
         //cast a box downwards and if it hits anything then you know player is standing on top of something
-        Vector2 boxOrigin = collider.bounds.center;
-        boxOrigin.y -= collider.bounds.extents.y;
+        Vector2 boxOrigin = componentReferences.collider.bounds.center;
+        boxOrigin.y -= componentReferences.collider.bounds.extents.y;
 
         float pixelToUnit = 1.0f / 64.0f;
 
-        Vector2 boxSize = collider.bounds.size;
+        Vector2 boxSize = componentReferences.collider.bounds.size;
         boxSize.y = pixelToUnit;//1 unit height
 
         //start the box cast slightly below the player's position that way if he collides with something right beside him that is level with him, he won't collide with the bottom of the
@@ -338,15 +321,15 @@ public class PlayerController : MonoBehaviour {
         boxOrigin.y -= boxSize.y;
 
         //some other function mighthave disabled collider, and we don't wanna forcibly enable collider incase it was disabled before, so keep track of whether it was previously enabled/disabled
-        bool colliderEnabledCache = collider.enabled;
+        bool colliderEnabledCache = componentReferences.collider.enabled;
 
         //disable player collider beforehand so boxcast doesn't return player
-        collider.enabled = false;
+        componentReferences.collider.enabled = false;
 
         float boxAngle = 0;
         RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
-        collider.enabled = colliderEnabledCache;
+        componentReferences.collider.enabled = colliderEnabledCache;
 
         //check to see if the boxcast hit the the top of any object, if it did then we can use that to determine the player's local axis, and we can say he is grounded
         //if the boxcast doesn't return the tops of any objects then it might have hit an object that is right beside the player by accident, and we don't consider that as grounded
@@ -379,10 +362,10 @@ public class PlayerController : MonoBehaviour {
 
     void OnDrawGizmos() {
 
-        Vector2 boxOrigin = collider.bounds.center;
-        boxOrigin.y -= collider.bounds.extents.y;
+        Vector2 boxOrigin = componentReferences.collider.bounds.center;
+        boxOrigin.y -= componentReferences.collider.bounds.extents.y;
 
-        Vector2 boxSize = collider.bounds.size;
+        Vector2 boxSize = componentReferences.collider.bounds.size;
         boxSize.y = 1.0f / 64.0f;//1 unit height
         boxOrigin.y -= boxSize.y;
 
@@ -395,7 +378,7 @@ public class PlayerController : MonoBehaviour {
     void die() {
 
         //first make a copy of all of the player's body parts
-        GameObject bodyCopy = GameObject.Instantiate(bodyParts.bodyRoot, bodyParts.bodyRoot.transform.position, bodyParts.bodyRoot.transform.rotation) as GameObject;
+        GameObject bodyCopy = GameObject.Instantiate(componentReferences.bodyParts.bodyRoot, componentReferences.bodyParts.bodyRoot.transform.position, componentReferences.bodyParts.bodyRoot.transform.rotation) as GameObject;
         bodyCopy.GetComponent<Animator>().enabled = false; //disable animations so explosion effect can happen
 
         //GET RID OF THIS LATER
@@ -432,13 +415,13 @@ public class PlayerController : MonoBehaviour {
 
         //disable player body so it isn't drawn, don't disable player game object  because we need healthbar to animate
         //once player healthbar reaches 0 we can stop drawing player
-        bodyParts.bodyRoot.SetActive(false);
+        componentReferences.bodyParts.bodyRoot.SetActive(false);
 
         //disable collider so he can't get shot again until he respawns
-        collider.enabled = false;
+        componentReferences.collider.enabled = false;
 
         //disable rigid body so player won't move
-        body.simulated = false;
+        componentReferences.body.simulated = false;
 
         //gameObject.SetActive(false);
         gameController.onPlayerDeath();
@@ -446,9 +429,9 @@ public class PlayerController : MonoBehaviour {
 
     public void respawn() {
 
-        collider.enabled = true;
-        body.simulated = true;
-        bodyParts.bodyRoot.SetActive(true);
+        componentReferences.collider.enabled = true;
+        componentReferences.body.simulated = true;
+        componentReferences.bodyParts.bodyRoot.SetActive(true);
         //gameObject.SetActive(true);
         healthManager.restoreHealth();
 
@@ -483,7 +466,7 @@ public class PlayerController : MonoBehaviour {
 
         //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
         isJumping = false;
-        body.gravityScale = 0;
+        componentReferences.body.gravityScale = 0;
     }
 
     //assigns the given display box to this player and makes the box track this player's information
@@ -494,7 +477,7 @@ public class PlayerController : MonoBehaviour {
         statusDisplayBox = displayBoxController;
 
         //set the initial values for the display box
-        statusDisplayBox.setAmmo(weaponManager.getAmmo());
+        statusDisplayBox.setAmmo(componentReferences.weaponManager.getAmmo());
         statusDisplayBox.setTeamColor(gameplayProperties.team);
         statusDisplayBox.setPlayerName(gameplayProperties.playerName);
         statusDisplayBox.setHealth(healthManager.getCurrentHealth());

@@ -27,6 +27,7 @@ public class PlayerAnimationController : MonoBehaviour {
             animator = gameObject.GetComponentInChildren<Animator>() as Animator;
 
         disableArmLayers();
+        useAnimationForGun(GunProperties.Type.SMG);
 	}
 
     //disable the animations on all the arm layers
