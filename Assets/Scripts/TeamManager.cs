@@ -42,8 +42,8 @@ public class TeamManager : MonoBehaviour {
 
             PlayerController playerController = child.gameObject.GetComponent<PlayerController>() as PlayerController;
 
-            playersInTeams[playerController.team].Add(playerController);
-            collidersForEachTeam[playerController.team].Add(child.gameObject.GetComponent<BoxCollider2D>() as BoxCollider2D);
+            playersInTeams[playerController.gameplayProperties.team].Add(playerController);
+            collidersForEachTeam[playerController.gameplayProperties.team].Add(child.gameObject.GetComponent<BoxCollider2D>() as BoxCollider2D);
         }
     }
 

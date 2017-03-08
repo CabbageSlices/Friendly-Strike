@@ -271,6 +271,7 @@ GameObject:
   - component: {fileID: 114000010739234764}
   - component: {fileID: 114000013011419374}
   - component: {fileID: 114000011105009554}
+  - component: {fileID: 114488621345679956}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -1047,18 +1048,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   body: {fileID: 50000013132484074}
   collider: {fileID: 61000012801974482}
-  animator: {fileID: 95000010391322560}
+  animationController: {fileID: 0}
+  inputHandler: {fileID: 0}
   weaponManager: {fileID: 114000013063123812}
   bodyParts: {fileID: 114000013011419374}
+  gameplayProperties:
+    speed: 0
+    jumpSpeed: 0
+    aimSensitivity: 0
+    controllerId: 0
+    team: 0
+    playerName: 
+    playerMoney: 0
+  healthManager: {fileID: 0}
   statusDisplayBox: {fileID: 0}
-  speed: 10
-  jumpSpeed: 20
-  aimSensitivity: 100
-  healthManager: {fileID: 114000011105009554}
-  controllerId: 0
-  team: 0
-  playerName: Nimesh Shrestha
-  playerMoney: 0
   raycastLayers:
     serializedVersion: 2
     m_Bits: 1
@@ -1193,6 +1196,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 1
+--- !u!114 &114488621345679956
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1000013821190802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb4d7b066c6ce7740b1a845932232a65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!212 &212000010256356036
 SpriteRenderer:
   m_ObjectHideFlags: 1

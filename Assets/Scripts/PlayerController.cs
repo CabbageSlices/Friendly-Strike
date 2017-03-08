@@ -4,37 +4,9 @@ using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour {
 
-    //keys used by the animator to access the parameters used to change animation states
-    class AnimationHashCodes {
-
-        public int armsAimingStateKey = Animator.StringToHash("Aiming");//aiming state in any layer
-        public int armsReloadingStateKey = Animator.StringToHash("Reload");
-
-        public int pistolFireStateKey = Animator.StringToHash("ArmsPistol.Fire");//firing state in pistol arms layer
-        public int pistolReloadingStateKey = Animator.StringToHash("ArmsPistol.Reload");//reloading state in pistol arms layer
-        public int pistolAimingStateKey = Animator.StringToHash("ArmsPistol.Aiming");//aiming state in pistol arms layer
-
-        public int fireKey = Animator.StringToHash("Fire");
-        public int reloadTriggerKey = Animator.StringToHash("Reload");
-        public int isWalkingKey = Animator.StringToHash("IsWalking");
-        public int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
-        public int IsGroundedKey = Animator.StringToHash("IsGrounded");
-    }
-
-    //player's arms are animated accordign to the weapon he is holding
-    //each type of weapon corresponds to a different animation layer, and we want to disable all arm animation layers except the layer corresponding to the equipped weapon
-    //map each type of weapon to an animation layer id
-    //remember that layer 0 is for the players  body, and will always play regardless of the type of weapon he is holding
-    Dictionary<GunProperties.Type, int> gunTypeToLayer = new Dictionary<GunProperties.Type, int>() {
-
-        { GunProperties.Type.Pistol, 1},
-        { GunProperties.Type.SMG, 2}
-    };
-
     //isGrounded does a boxcast beneath the player to check for platforms
     //this distance is the maximum distance to cast the box
     private float isGroundedBoxCastDistance = 0.2f;
-    private AnimationHashCodes animationHashCodes = new AnimationHashCodes();
 
     //angle between the player and the target he is aiming at
     //used to fire a bullet, IN RADIANS
@@ -68,36 +40,31 @@ public class PlayerController : MonoBehaviour {
     //object's own components, way to cache the object returned by GetComponent
     [SerializeField]
     private Rigidbody2D body;
+
     [SerializeField]
     new private BoxCollider2D collider;
+
     [SerializeField]
-    private Animator animator;
+    PlayerAnimationController animationController;
+
+    [SerializeField]
+    PlayerInputHandler inputHandler;
 
     [SerializeField]
     private EquippedWeaponManager weaponManager;//used to handle weapon control
+
     [SerializeField]
     private PlayerBodyParts bodyParts;//body parts of the player
 
-    //reference to the player's status display box
-    public StatusDisplayBoxController statusDisplayBox;
+    [SerializeField]
+    public PlayerGameplayProperties gameplayProperties;
 
-    public float speed = 5;
-    public float jumpSpeed = 10; //initial vertical speed the player gets when he presses the jump button
-    [Range(10, 100)]
-    public int aimSensitivity = 1; //how fast the aim will jump to player's intended target
 
     //health manager reference
     public HealthManager healthManager;
 
-    //id of the controller used to control this player
-    //0 represents keyboard/mouse, all numbers bigger than 0 represent a joypad
-    public int controllerId;
-
-    //player's team id
-    public TeamProperties.Teams team;
-
-    public string playerName;
-    public int playerMoney;
+    //reference to the player's status display box
+    public StatusDisplayBoxController statusDisplayBox;
 
     //layers that contain objects that the player can use to jump on top of
     //this is basically the layers that the physics2D can raycast against when checking if player can jump, or if player is standing on a platform
@@ -116,9 +83,6 @@ public class PlayerController : MonoBehaviour {
         if (collider == null)
             Debug.LogWarning("playerController script has no BoxCollider2D reference (collider is null)");
 
-        if (animator == null)
-            Debug.LogWarning("playerController script has no Animator reference (animator is null)");
-
         if (weaponManager == null)
             Debug.LogWarning("playerController script has no EquippedWeaponManager reference (weaponManager is null)");
 
@@ -130,6 +94,11 @@ public class PlayerController : MonoBehaviour {
 
         if (statusDisplayBox == null)
             Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
+
+        animationController = GetComponent<PlayerAnimationController>() as PlayerAnimationController;
+        inputHandler = GetComponent<PlayerInputHandler>() as PlayerInputHandler;
+
+        animationController.useAnimationForGun(GunProperties.Type.Pistol);
 
         gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
 
@@ -153,6 +122,11 @@ public class PlayerController : MonoBehaviour {
         healthManager.onZeroHealth += die;
         TeamScoreManager.onTeamScoreChange += handleTeamScoreChange;
 
+        inputHandler.onJumpPress += jump;
+        inputHandler.onFirePress += fire;
+        inputHandler.onReloadPress += reload;
+        weaponManager.onEquipWeapon += animationController.useAnimationForGun;
+
         subscribeStatusDisplayBoxToEvents();
     }
 
@@ -170,6 +144,11 @@ public class PlayerController : MonoBehaviour {
 
         healthManager.onZeroHealth -= die;
         TeamScoreManager.onTeamScoreChange -= handleTeamScoreChange;
+
+        inputHandler.onJumpPress -= jump;
+        inputHandler.onFirePress -= fire;
+        inputHandler.onReloadPress -= reload;
+        weaponManager.onEquipWeapon -= animationController.useAnimationForGun;
 
         unsubscribeStatusDisplayBoxFromEvents();
     }
@@ -192,11 +171,10 @@ public class PlayerController : MonoBehaviour {
         if (!isGroundedCached || isJumping)
             body.gravityScale = defaultGravity;
 
-        animator.SetFloat(animationHashCodes.jumpVelocityKey, body.velocity.y);
-        animator.SetBool(animationHashCodes.isWalkingKey, body.velocity.x != 0);
-        animator.SetBool(animationHashCodes.IsGroundedKey, isGroundedCached && !isJumping);
-
-        determineGunAnimation();
+        animationController.setJumpVelocityParameter(body.velocity.y);
+        animationController.setIsGroundedParameter(isGroundedCached && !isJumping);
+        animationController.setIsWalkingParameter(body.velocity.x != 0);
+        
         determineSpriteDirection();
         determineSpriteArmOrientation();
     }
@@ -204,7 +182,7 @@ public class PlayerController : MonoBehaviour {
     //reads the player's input to determine his movement and orientation
     void handleInput(bool isGroundedCached) {
 
-        float valueHorizontalAxis = Input.GetAxis("Horizontal" + controllerId);
+        float valueHorizontalAxis = inputHandler.getValueHorizontalAxis();
 
         Vector2 velocity = new Vector2(0, body.velocity.y);
 
@@ -215,52 +193,31 @@ public class PlayerController : MonoBehaviour {
         if (isGroundedCached && !isJumping) {
 
             velocity.y = 0;
-        }
-            
+        }   
 
         //calculate the velocity player should have when moving across the surface of the ground he is standing on
-        Vector2 horizontalVelocity = localHorizontalDirection * valueHorizontalAxis * speed;
+        Vector2 horizontalVelocity = localHorizontalDirection * valueHorizontalAxis * gameplayProperties.speed;
 
         //override local horizontal direction if player is jumping, because if he is jumping but he hasn't left the ground yet then local horizontal direction
         //might point upwards still, so his jump button and his left/right button will  cause him to go upwards with a very large velocity
         if(isJumping)
-            horizontalVelocity = new Vector2(1, 0) * valueHorizontalAxis * speed;
+            horizontalVelocity = new Vector2(1, 0) * valueHorizontalAxis * gameplayProperties.speed;
 
         velocity += horizontalVelocity;
 
-        if (Input.GetButtonDown("Jump" + controllerId) && canJump(isGroundedCached)) {
-
-            isJumping = true;
-            velocity.y = jumpSpeed;
-        }
-
-        if (Input.GetButtonDown("Reload" + controllerId) && canReload()) {
-
-            animator.SetTrigger(animationHashCodes.reloadTriggerKey);
-        }
-
-        if (Input.GetButton("Fire" + controllerId) && canFire()) {
-
-            fire();
-
-        } else {
-
-            animator.SetBool(animationHashCodes.fireKey, false);
-        }
-
-        calculateVectorToTarget();
+        aimTargetPosition = inputHandler.calculateAimVector(aimTargetPosition, bodyParts.arms.transform.position);
 
         body.velocity = velocity;
     }
 
     bool canReload() {
 
-        return weaponManager.canReload() && animator.GetCurrentAnimatorStateInfo(1).shortNameHash == animationHashCodes.armsAimingStateKey;
+        return weaponManager.canReload() && animationController.isAiming();
     }
 
     bool canFire() {
 
-        return animator.GetCurrentAnimatorStateInfo(1).fullPathHash != animationHashCodes.pistolReloadingStateKey && weaponManager.canFire();
+        return animationController.isAiming() && weaponManager.canFire();
     }
 
     bool canJump(bool isGroundedCached) {
@@ -271,23 +228,32 @@ public class PlayerController : MonoBehaviour {
     //plays the fire animation, creates a bullet
     void fire() {
 
-        animator.SetBool(animationHashCodes.fireKey, true);
-        weaponManager.fire(angleToFireBullets, team);
+        bool fire = canFire();
 
-    }
+        if (fire) {
 
-    //determine which animation layer to use for the current equipped gun
-    //enables the corresponding layer and disables all the rest
-    void determineGunAnimation() {
-
-        //first disable all layers to begin with
-        foreach (GunProperties.Type type in gunTypeToLayer.Keys) {
-
-            animator.SetLayerWeight((int)type, 0.0f);
+            weaponManager.fire(angleToFireBullets, gameplayProperties.team);
         }
 
-        //enable the layer that corresponds to the current weapon
-        animator.SetLayerWeight(gunTypeToLayer[weaponManager.getTypeOfEquippedWeapon()], 100.0f);
+        animationController.setFireParameter(fire);
+    }
+
+    //the current ccalculated velocity of the player this frame
+    void jump() {
+
+        if(canJump(isGrounded())) {
+
+            isJumping = true;
+            body.velocity = new Vector2(body.velocity.x, gameplayProperties.jumpSpeed);
+        }
+    }
+
+    void reload() {
+
+        if(canReload()) {
+
+            animationController.playReloadAnimation();
+        }
     }
 
     //flip the player's sprite to the left or right depending on which way he is moving
@@ -303,32 +269,6 @@ public class PlayerController : MonoBehaviour {
         }
 
         bodyParts.bodyRoot.transform.localScale = previousScale;
-    }
-
-    //calculate direction to the player's target relative to his arms
-    //this is done to determine the orientation of the arms and gun so that it is pointing in the direction the player is aiming
-    //returns an UN-NORMALIZED vector
-    void calculateVectorToTarget() {
-
-        //for keyboard/mouse user
-        if (controllerId == 0) {
-
-            aimTargetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition) - bodyParts.arms.transform.position;
-            return;
-        }
-
-        //for controllers
-        //don't immediately use the input as the target position because we don't want the player's aim to jump around when he lets go of the control stick
-        Vector2 currentAxisValue = new Vector2(Input.GetAxisRaw("AimHorizontal" + controllerId), Input.GetAxisRaw("AimVertical" + controllerId));
-
-        //ignore values at center of axis that way when player lets go of the stick, the position of the target remains unchanged because
-        //it will use the last recorded input values which are all non zero, and the current reading is zero which is ignored
-        //this will let the user's aim stay close to what it was before he let go of the stick
-        //rawAxis is used because the inputManager's deadzones will output 0 for values at the edge of the deadzone, and i don't want
-        //to have values of 0 outside of my deadzone, i want the actual value of the controller.
-        float deadzone = 0.15f;
-        if (currentAxisValue.sqrMagnitude > deadzone * deadzone)
-            aimTargetPosition = new Vector2(Input.GetAxis("AimHorizontal" + controllerId), Input.GetAxis("AimVertical" + controllerId));
     }
 
     //rotates the arms so that they're pointing towards the target
@@ -367,14 +307,14 @@ public class PlayerController : MonoBehaviour {
         angle -= weaponManager.getGunElevationAbovePlayerHands();
 
         //if user is reloading then disable aiming so it doesn't mess up the reloading animation
-        if (animator.GetCurrentAnimatorStateInfo(1).shortNameHash == animationHashCodes.armsReloadingStateKey)
+        if (animationController.isReloading())
             angle = 0;
 
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
         if (bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
 
-        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * aimSensitivity);
+        bodyParts.arms.transform.rotation = Quaternion.Slerp(bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * gameplayProperties.aimSensitivity);
         Debug.DrawRay(bodyParts.arms.transform.position, aimTargetPosition, Color.red);
 
     }
@@ -525,8 +465,8 @@ public class PlayerController : MonoBehaviour {
 
     public void receiveMoney(int amount) {
 
-        playerMoney += amount;
-        statusDisplayBox.setMoney(playerMoney);
+        gameplayProperties.playerMoney += amount;
+        statusDisplayBox.setMoney(gameplayProperties.playerMoney);
     }
 
     void OnCollisionEnter2D(Collision2D collision) {
@@ -540,8 +480,6 @@ public class PlayerController : MonoBehaviour {
         //but lands on the slope again while he is still goign upwards
         /*if(body.velocity.y > 0)
             return;*/
-
-        Debug.Log("Disabled");
 
         //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
         isJumping = false;
@@ -557,10 +495,10 @@ public class PlayerController : MonoBehaviour {
 
         //set the initial values for the display box
         statusDisplayBox.setAmmo(weaponManager.getAmmo());
-        statusDisplayBox.setTeamColor(team);
-        statusDisplayBox.setPlayerName(playerName);
+        statusDisplayBox.setTeamColor(gameplayProperties.team);
+        statusDisplayBox.setPlayerName(gameplayProperties.playerName);
         statusDisplayBox.setHealth(healthManager.getCurrentHealth());
-        statusDisplayBox.setMoney(playerMoney);
+        statusDisplayBox.setMoney(gameplayProperties.playerMoney);
         statusDisplayBox.setScore(0);
 
         subscribeStatusDisplayBoxToEvents();
@@ -569,7 +507,7 @@ public class PlayerController : MonoBehaviour {
     //when a team's score gets changed the status display box should reflect the change
     public void handleTeamScoreChange(TeamProperties.Teams teamWhoseScoreWasChanged, int newScore) {
 
-        if (team == teamWhoseScoreWasChanged)
+        if (gameplayProperties.team == teamWhoseScoreWasChanged)
             statusDisplayBox.setScore(newScore);
     }
 }

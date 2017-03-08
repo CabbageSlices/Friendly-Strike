@@ -5,6 +5,9 @@ using System.Collections;
 //It will handle the user's input for the weapon, player's firing, reloading, and changing weapons
 public class EquippedWeaponManager : MonoBehaviour {
 
+    public delegate void EquipWeapon(GunProperties.Type type);
+    public event EquipWeapon onEquipWeapon;
+
     //hold together the data of the equipped weapon
     struct EquippedWeapon {
 
