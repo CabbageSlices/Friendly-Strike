@@ -10,7 +10,15 @@ public class PlayerInputHandler : MonoBehaviour {
     public event Action onFirePress;
     public event Action onReloadPress;
 
-    public int controllerId;
+    //players current movmeent along the horizontal direction
+    public enum HorizontalInputMovement {
+
+        Left,
+        Right,
+        NotMoving
+    };
+
+    int controllerId;
 
     //strings for each input axis
     //these represent the names of the axis used to represent horizontal/vertical input, and button presses for jump, reload, and fire
@@ -26,9 +34,8 @@ public class PlayerInputHandler : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-
-        bool thing = Input.GetButtonDown("Jump" + controllerId);
-        if (Input.GetButtonDown("Jump" + controllerId) && onJumpPress != null)
+        
+        if (Input.GetButtonDown(jumpAxis + controllerId) && onJumpPress != null)
             onJumpPress();
 
         if (Input.GetButton(fireAxis + controllerId) && onFirePress != null)
@@ -36,6 +43,11 @@ public class PlayerInputHandler : MonoBehaviour {
 
         if (Input.GetButtonDown(reloadAxis + controllerId) && onReloadPress != null)
             onReloadPress();
+    }
+
+    public void setControllerId(int id) {
+
+        controllerId = id;
     }
 
     //get the input reading along the horizontal axis

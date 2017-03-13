@@ -6,6 +6,14 @@ using System.Collections.Generic;
 [RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : MonoBehaviour {
 
+    enum States {
+
+        Grounded,
+        Jumping,
+        Falling,
+        Dead
+    }
+
     //isGrounded does a boxcast beneath the player to check for platforms
     //this distance is the maximum distance to cast the box
     private float isGroundedBoxCastDistance = 0.2f;
@@ -17,17 +25,13 @@ public class PlayerController : MonoBehaviour {
     //direction of the target the player is aiming towards relative to the player's arm origin
     //UN-NORMALIZD vector because when the player uses a joystick, this will store the user inputs on each axis
     //give initial value of the right vector since players start off facing to the right
+    //used to line up the guns line of sight with the player's line of sight to the target
     private Vector2 aimTargetPosition = new Vector2(1, 0);
 
     //copy of body that is used to create an explosion effect when player dies
     //when player dies he will explode into several pieces, and this gameobject will be the parent of all of the body parts,
     //that way we can delete this clone to remove all pieces
     GameObject bodyCloneForDeathEffect;
-
-    //keeps track of wether the player pressed the jump button and is jumping
-    //needed to distinguish between player walking off a platform, and player jumping
-    //if player jumps he should play jumping animation, if player walks off platform (isGroudned = false) then he should play falling animation
-    private bool isJumping = false;
 
     //which direction the player will move in if he presses the left or right button
     //this will change when the player stands on different slopes in order to becoem parallel to the slope
@@ -38,6 +42,8 @@ public class PlayerController : MonoBehaviour {
     //when player lands on a platform we need to set his gravity to 0 otherwise he will slide down slopes
     //when player jumps or falls off a platform we reset gravity to whatever it was initially
     private float defaultGravity;
+
+    States currentState = States.Falling;
 
     [SerializeField]
     private PlayerComponentReferences componentReferences;
@@ -55,39 +61,26 @@ public class PlayerController : MonoBehaviour {
     //this is basically the layers that the physics2D can raycast against when checking if player can jump, or if player is standing on a platform
     public LayerMask raycastLayers;
 
-    //debugging, freezing or slowing down time
-    public float timeScale;
-
     public GameController gameController;
 
     void Start() {
 
-        if (componentReferences.body == null)
-            Debug.LogWarning("playerController script has no Rigidbody2D reference (body is null)");
-
-        if (componentReferences.collider == null)
-            Debug.LogWarning("playerController script has no BoxCollider2D reference (collider is null)");
-
-        if (componentReferences.weaponManager == null)
-            Debug.LogWarning("playerController script has no EquippedWeaponManager reference (weaponManager is null)");
-
-        if (componentReferences.bodyParts == null)
-            Debug.LogWarning("playercontroller missing bodyParts refernece");
-
-        if (healthManager == null)
-            Debug.LogWarning("PlayerController missing healthManager reference");
-
-        if (statusDisplayBox == null)
-            Debug.LogWarning("PlayerController missing StatusDisplayBox reference");
-
-        componentReferences.animationController = GetComponent<PlayerAnimationController>() as PlayerAnimationController;
-        componentReferences.inputHandler = GetComponent<PlayerInputHandler>() as PlayerInputHandler;
-
-        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
-
-        Time.timeScale = timeScale;
+        setupReferences();
 
         defaultGravity = componentReferences.body.gravityScale;
+        componentReferences.inputHandler.setControllerId(gameplayProperties.controllerId);
+    }
+
+    void setupReferences() {
+
+        componentReferences.body = GetComponent<Rigidbody2D>() as Rigidbody2D;
+        componentReferences.collider = GetComponent<BoxCollider2D>() as BoxCollider2D;
+        componentReferences.weaponManager = GetComponentInChildren<EquippedWeaponManager>() as EquippedWeaponManager;
+        componentReferences.bodyParts = GetComponent<PlayerBodyParts>() as PlayerBodyParts;
+        
+        healthManager = GetComponentInChildren<HealthManager>() as HealthManager;
+
+        gameController = GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>() as GameController;
     }
 
     void OnEnable() {
@@ -98,6 +91,67 @@ public class PlayerController : MonoBehaviour {
     void OnDisable() {
 
         unsubscribeFromEvents();
+    }
+
+    void enterState(States next) {
+
+        if (next == States.Falling || next == States.Jumping) {
+
+            componentReferences.body.gravityScale = defaultGravity;
+        }
+
+        if (next == States.Jumping) {
+            
+            componentReferences.body.velocity = new Vector2(componentReferences.body.velocity.x, gameplayProperties.jumpSpeed);
+        }
+
+        if(next == States.Grounded) {
+
+            componentReferences.body.gravityScale = 0;
+        }
+
+        if(next == States.Dead) {
+
+            createBodyCloneForDeath();
+
+            //disable player body so it isn't drawn, don't disable player game object  because we need healthbar to animate
+            //once player healthbar reaches 0 we can stop drawing player
+            componentReferences.bodyParts.bodyRoot.SetActive(false);
+
+            //disable collider so he can't get shot again until he respawns
+            componentReferences.collider.enabled = false;
+
+            //disable rigid body so player won't move
+            componentReferences.body.simulated = false;
+
+            //gameObject.SetActive(false);
+            gameController.onPlayerDeath();
+        }
+
+        currentState = next;
+    }
+    
+    void exitState() {
+        
+        if(currentState == States.Dead) {
+
+            componentReferences.collider.enabled = true;
+            componentReferences.body.simulated = true;
+            componentReferences.bodyParts.bodyRoot.SetActive(true);
+            //gameObject.SetActive(true);
+            healthManager.restoreHealth();
+
+            if (bodyCloneForDeathEffect != null)
+                GameObject.Destroy(bodyCloneForDeathEffect);
+
+            bodyCloneForDeathEffect = null;
+        }
+    }
+
+    void changeState(States toChange) {
+
+        exitState();
+        enterState(toChange);
     }
 
     void subscribeToEvents() {
@@ -148,14 +202,22 @@ public class PlayerController : MonoBehaviour {
     // Update is called once per frame
     void Update() {
 
-        bool isGroundedCached = isGrounded();
-        handleInput(isGroundedCached);
+        if(currentState == States.Grounded) {
 
-        if (!isGroundedCached || isJumping)
-            componentReferences.body.gravityScale = defaultGravity;
+            //determine the vector tangent to the surface the player is standing on that way he can move left and right along the surface
+            localHorizontalDirection = getLocalHorizontalAxis();
+
+            //if the vector is 0 it means that he isn't standing on anything so he eshould start falling
+            if(localHorizontalDirection.sqrMagnitude < 0.01f) {
+
+                changeState(States.Falling);
+            }
+        }
+        
+        handleInput();
 
         componentReferences.animationController.setJumpVelocityParameter(componentReferences.body.velocity.y);
-        componentReferences.animationController.setIsGroundedParameter(isGroundedCached && !isJumping);
+        componentReferences.animationController.setIsGroundedParameter(currentState == States.Grounded);
         componentReferences.animationController.setIsWalkingParameter(componentReferences.body.velocity.x != 0);
         
         determineSpriteDirection();
@@ -163,32 +225,32 @@ public class PlayerController : MonoBehaviour {
     }
 
     //reads the player's input to determine his movement and orientation
-    void handleInput(bool isGroundedCached) {
+    void handleInput() {
 
         float valueHorizontalAxis = componentReferences.inputHandler.getValueHorizontalAxis();
-
         Vector2 velocity = new Vector2(0, componentReferences.body.velocity.y);
 
-        //when player is grounded and not jumping we don't need a y velocity since he is on the ground and isn't trying to go upwards
-        //but if he is falling/jumping then we don't want to override the y velocity because he will stop midair 
-        //we need to make sure player isn't jumping because he might have started jumping but he might be close enough to the ground to be eregistered as grounded
-        //in which case we can't disable velocity or player will never go up
-        if (isGroundedCached && !isJumping) {
+        if (currentState == States.Grounded) {
 
-            velocity.y = 0;
-        }   
+            //if player moves horizontally then determine the vector tangent to the surface he is standing  on
+            //make player move along the surface beneath him
 
-        //calculate the velocity player should have when moving across the surface of the ground he is standing on
-        Vector2 horizontalVelocity = localHorizontalDirection * valueHorizontalAxis * gameplayProperties.speed;
+            //if player presses jump button, go to jumped state 
+            velocity = localHorizontalDirection * valueHorizontalAxis * gameplayProperties.speed;
+        }
 
-        //override local horizontal direction if player is jumping, because if he is jumping but he hasn't left the ground yet then local horizontal direction
-        //might point upwards still, so his jump button and his left/right button will  cause him to go upwards with a very large velocity
-        if(isJumping)
-            horizontalVelocity = new Vector2(1, 0) * valueHorizontalAxis * gameplayProperties.speed;
+        if(currentState == States.Jumping || currentState == States.Falling) {
 
-        velocity += horizontalVelocity;
+            //if player moves horizontally then move him in global left or right direction
+            //don't override the vertical velocity that way he can keep falling at wwhatever speed the physics engine
+            velocity += new Vector2(1, 0) * valueHorizontalAxis * gameplayProperties.speed;
+        }
 
-        aimTargetPosition = componentReferences.inputHandler.calculateAimVector(aimTargetPosition, componentReferences.bodyParts.arms.transform.position);
+        if(currentState == States.Dead) {
+
+            //don't handle input
+            return;
+        }
 
         componentReferences.body.velocity = velocity;
     }
@@ -203,9 +265,9 @@ public class PlayerController : MonoBehaviour {
         return componentReferences.animationController.isAiming() && componentReferences.weaponManager.canFire();
     }
 
-    bool canJump(bool isGroundedCached) {
+    bool canJump() {
 
-        return isGroundedCached && !isJumping;
+        return currentState == States.Grounded;
     }
 
     //plays the fire animation, creates a bullet
@@ -224,11 +286,8 @@ public class PlayerController : MonoBehaviour {
     //the current ccalculated velocity of the player this frame
     void jump() {
 
-        if(canJump(isGrounded())) {
-
-            isJumping = true;
-            componentReferences.body.velocity = new Vector2(componentReferences.body.velocity.x, gameplayProperties.jumpSpeed);
-        }
+        if(canJump())
+            changeState(States.Jumping);
     }
 
     void reload() {
@@ -258,6 +317,8 @@ public class PlayerController : MonoBehaviour {
     //flips the arms horizontally if target is to the left or right of the player
     //this will also take the body's current direction into account so that if player is already facing left and target is to the left, the arms won't be mirrored
     void determineSpriteArmOrientation() {
+
+        aimTargetPosition = componentReferences.inputHandler.calculateAimVector(aimTargetPosition, componentReferences.bodyParts.arms.transform.position);
 
         //reset rotation so all calculations can be made with the player pointing gun stragith to the right
         //arms.transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -302,23 +363,24 @@ public class PlayerController : MonoBehaviour {
 
     }
 
-    //checks if the player is standing on some kind of platform
-    //if player is grounded then he can jump by pressing the jump key
-    bool isGrounded() {
-
-        //player is grounded if there is something below him (distance to object beneath him must be really small)
+    //returns the vector that is tangent to the surface the player is currently standing on
+    //if the vector returned has magnitude 0 then player is not standing on any surface
+    Vector2 getLocalHorizontalAxis() {
+        
         //cast a box downwards and if it hits anything then you know player is standing on top of something
+        //the box will have width equal to the player's collider width
+        //and height of 1 unit
         Vector2 boxOrigin = componentReferences.collider.bounds.center;
         boxOrigin.y -= componentReferences.collider.bounds.extents.y;
 
         float pixelToUnit = 1.0f / 64.0f;
-
+        
         Vector2 boxSize = componentReferences.collider.bounds.size;
         boxSize.y = pixelToUnit;//1 unit height
 
         //start the box cast slightly below the player's position that way if he collides with something right beside him that is level with him, he won't collide with the bottom of the
         //object's collider and mess up the localHorizontalDirection calculation
-        boxOrigin.y -= boxSize.y;
+        //boxOrigin.y -= boxSize.y;
 
         //some other function mighthave disabled collider, and we don't wanna forcibly enable collider incase it was disabled before, so keep track of whether it was previously enabled/disabled
         bool colliderEnabledCache = componentReferences.collider.enabled;
@@ -326,15 +388,16 @@ public class PlayerController : MonoBehaviour {
         //disable player collider beforehand so boxcast doesn't return player
         componentReferences.collider.enabled = false;
 
-        float boxAngle = 0;
+        float boxAngle = 0;//rotation of the box being cast
         RaycastHit2D[] objectsBelowPlayer = Physics2D.BoxCastAll(boxOrigin, boxSize, boxAngle, Vector2.down, isGroundedBoxCastDistance, raycastLayers.value);
 
         componentReferences.collider.enabled = colliderEnabledCache;
 
-        //check to see if the boxcast hit the the top of any object, if it did then we can use that to determine the player's local axis, and we can say he is grounded
+        //check to see if the boxcast hit the the top of any object, if it did then we can use that to determine the player's local axis
         //if the boxcast doesn't return the tops of any objects then it might have hit an object that is right beside the player by accident, and we don't consider that as grounded
         RaycastHit2D objectBelowPlayer = new RaycastHit2D();
 
+        //find first object player collided with
         foreach (var hitBelowPlayer in objectsBelowPlayer) {
 
             //normal points slightly upwards
@@ -350,14 +413,10 @@ public class PlayerController : MonoBehaviour {
 
             //align the players horizontal direction to be parallel with the  top of the ground
             //that way when he moves left/right he climbs up/down a slope and doesn't try to walk into it
-            localHorizontalDirection = new Vector2(objectBelowPlayer.normal.y, -objectBelowPlayer.normal.x);
-
-        } else {
-
-            localHorizontalDirection = new Vector2(1, 0);
+            return new Vector2(objectBelowPlayer.normal.y, -objectBelowPlayer.normal.x);
         }
 
-        return objectBelowPlayer.collider != null;
+        return new Vector2(0, 0);
     }
 
     void OnDrawGizmos() {
@@ -374,8 +433,7 @@ public class PlayerController : MonoBehaviour {
         Debug.DrawLine(boxOrigin, boxOrigin - length, Color.green);
     }
 
-    //make a death body part explosion effect
-    void die() {
+    void createBodyCloneForDeath() {
 
         //first make a copy of all of the player's body parts
         GameObject bodyCopy = GameObject.Instantiate(componentReferences.bodyParts.bodyRoot, componentReferences.bodyParts.bodyRoot.transform.position, componentReferences.bodyParts.bodyRoot.transform.rotation) as GameObject;
@@ -412,33 +470,17 @@ public class PlayerController : MonoBehaviour {
 
         //store a reference to the new body so it can be deleted later
         bodyCloneForDeathEffect = bodyCopy;
+    }
 
-        //disable player body so it isn't drawn, don't disable player game object  because we need healthbar to animate
-        //once player healthbar reaches 0 we can stop drawing player
-        componentReferences.bodyParts.bodyRoot.SetActive(false);
+    //make a death body part explosion effect
+    void die() {
 
-        //disable collider so he can't get shot again until he respawns
-        componentReferences.collider.enabled = false;
-
-        //disable rigid body so player won't move
-        componentReferences.body.simulated = false;
-
-        //gameObject.SetActive(false);
-        gameController.onPlayerDeath();
+        changeState(States.Dead);
     }
 
     public void respawn() {
 
-        componentReferences.collider.enabled = true;
-        componentReferences.body.simulated = true;
-        componentReferences.bodyParts.bodyRoot.SetActive(true);
-        //gameObject.SetActive(true);
-        healthManager.restoreHealth();
-
-        if (bodyCloneForDeathEffect != null)
-            GameObject.Destroy(bodyCloneForDeathEffect);
-
-        bodyCloneForDeathEffect = null;
+        changeState(States.Grounded);
     }
 
     public bool isAlive() {
@@ -454,19 +496,21 @@ public class PlayerController : MonoBehaviour {
 
     void OnCollisionEnter2D(Collision2D collision) {
 
-        //if the colliding object isn't soemthign the player can stand on, then ignore it
+        //if the colliding object isn't something the player can stand on, then ignore it
         if (((1 << collision.gameObject.layer) & raycastLayers.value) == 0)
             return;
+
+        //player is already grounded, no need to ground him again
+        if(currentState == States.Grounded)
+            return;
+
+        changeState(States.Grounded);
         
         //if player is going upwards then he might have passed through a one way platform so he is still jumping
         //don't comment this out becaues it will cause infinite jumping if player starts moving up a slope and jumps,
         //but lands on the slope again while he is still goign upwards
         /*if(body.velocity.y > 0)
             return;*/
-
-        //set gravity to zero because if player is standing on a slope and there is gravity then he will be pulled down
-        isJumping = false;
-        componentReferences.body.gravityScale = 0;
     }
 
     //assigns the given display box to this player and makes the box track this player's information
