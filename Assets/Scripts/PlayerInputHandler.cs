@@ -8,6 +8,7 @@ public class PlayerInputHandler : MonoBehaviour {
 
     public event Action onJumpPress;
     public event Action onFirePress;
+    public event Action onFireRelease;
     public event Action onReloadPress;
 
     //players current movmeent along the horizontal direction
@@ -40,6 +41,9 @@ public class PlayerInputHandler : MonoBehaviour {
 
         if (Input.GetButton(fireAxis + controllerId) && onFirePress != null)
             onFirePress();
+
+        if(Input.GetButtonUp(fireAxis + controllerId) && onFireRelease != null)
+            onFireRelease();
 
         if (Input.GetButtonDown(reloadAxis + controllerId) && onReloadPress != null)
             onReloadPress();

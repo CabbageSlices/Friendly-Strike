@@ -82,6 +82,10 @@ public class BulletController : MonoBehaviour {
 
     void OnCollisionEnter2D(Collision2D collision) {
 
+        //if collision is disabled it means bullet probably passed through one way platform, ignore collision
+        if(!collision.enabled)
+            return;
+
         Destroy(gameObject);
 
         if (collision.gameObject.tag != "Player")

@@ -128,6 +128,7 @@ public class PlayerController : MonoBehaviour {
             gameController.onPlayerDeath();
         }
 
+        Debug.Log(next + "  " + Time.time);
         currentState = next;
     }
     
@@ -516,7 +517,12 @@ public class PlayerController : MonoBehaviour {
         if(currentState == States.Grounded)
             return;
 
+        //player collided against a wall horizontally, don't make him grounded for this
+        if (collision.contacts[0].normal.y < 0.2)
+            return;
+
         changeState(States.Grounded);
+        Debug.Log(collision.contacts[0].normal + "  " + Time.time);
         
         //if player is going upwards then he might have passed through a one way platform so he is still jumping
         //don't comment this out becaues it will cause infinite jumping if player starts moving up a slope and jumps,
