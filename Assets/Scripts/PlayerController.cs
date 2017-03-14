@@ -213,6 +213,11 @@ public class PlayerController : MonoBehaviour {
                 changeState(States.Falling);
             }
         }
+
+        if(currentState == States.Dead) {
+
+            return;
+        }
         
         handleInput();
 
@@ -277,7 +282,7 @@ public class PlayerController : MonoBehaviour {
 
         if (fire) {
 
-            componentReferences.weaponManager.fire(angleToFireBullets, gameplayProperties.team);
+            componentReferences.weaponManager.fire(angleToFireBullets, this);
         }
 
         componentReferences.animationController.setFireParameter(fire);
@@ -536,5 +541,15 @@ public class PlayerController : MonoBehaviour {
 
         if (gameplayProperties.team == teamWhoseScoreWasChanged)
             statusDisplayBox.setScore(newScore);
+    }
+
+    public BoxCollider2D getCollider() {
+
+        return componentReferences.collider;
+    }
+
+    public TeamProperties.Teams getTeam() {
+
+        return gameplayProperties.team;
     }
 }

@@ -9,6 +9,9 @@ public class EquippedWeaponManager : MonoBehaviour {
     public delegate void EquipWeapon(GunProperties.Type type);
     public event EquipWeapon onEquipWeapon;
 
+    public delegate void ChangeAmmo(int newAmmo);
+    public event ChangeAmmo onAmmoChange;//event called when the player's equippied weapon's current ammo changes
+
     //hold together the data of the equipped weapon
     struct EquippedWeapon {
 
@@ -31,9 +34,6 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     //reference to teammanger so that it can be cached and used by bullets to ignore collisions
     private TeamManager teamManager;
-
-    public delegate void ChangeAmmo(int newAmmo);
-    public event ChangeAmmo onAmmoChange;//event called when the player's equippied weapon's current ammo changes
 
     public PlayerBodyParts playerBodyParts;
 
@@ -168,7 +168,7 @@ public class EquippedWeaponManager : MonoBehaviour {
     }
 
     //angle that the player rotated his arms by in order to aim at the target, IN RADIANS
-    public void fire(float angleToTarget, TeamProperties.Teams teamThatFiredBullet) {
+    public void fire(float angleToTarget, PlayerController shooter) {
 
         if (equippedWeapon.gun == null)
             return;
@@ -178,10 +178,8 @@ public class EquippedWeaponManager : MonoBehaviour {
 
         GameObject bullet = Instantiate(equippedWeapon.properties.bullet);
         BulletBehaviour behaviourFiredBullet = (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour);
-
-        behaviourFiredBullet.idTeamThatFiredBullet = teamThatFiredBullet;
-        behaviourFiredBullet.teamManager = teamManager;
-        behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread);
+        
+        behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread, shooter);
 
         if(onAmmoChange != null)
             onAmmoChange(equippedWeapon.properties.remainingBullets);

@@ -39,7 +39,7 @@ public class StatusDisplayManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-        playersParent = GameObject.Find("Players");
+        playersParent = GameObject.FindWithTag("TeamManager");
         teamManager = playersParent.GetComponent<TeamManager>() as TeamManager;
 
         if (teamManager == null)
