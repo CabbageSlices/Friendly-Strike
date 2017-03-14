@@ -12,15 +12,15 @@ public class HealthManager : MonoBehaviour {
     public event HealthChangeEvent onHealthChange;//called when player's health changes value somehow
     
     public int initialHealth;
-    public HealthBarManager healthBarManager;//script that handles the healthbar UI changes
+    public HealthBarController healthBarController;//script that handles the healthbar UI changes
 
     private int currentHealth;
 
 	// Use this for initialization
 	void Start () {
 
-        if (healthBarManager == null)
-            Debug.LogWarning("HealthManager is missing healthBarManager reference");
+        if (healthBarController == null)
+            Debug.LogWarning("HealthManager is missing healthBarController reference");
 
         currentHealth = initialHealth;
 	}
@@ -28,12 +28,12 @@ public class HealthManager : MonoBehaviour {
     //updates the healthbar graphics to reflect the current health value
     void updateHealthBar() {
 
-        if (healthBarManager == null)
+        if (healthBarController == null)
             return;
 
         //change healthbar value
         float fractionHealthRemaining = (float)currentHealth / (float)initialHealth;
-        healthBarManager.setHealthValue(fractionHealthRemaining);
+        healthBarController.setHealthValue(fractionHealthRemaining);
     }
 
     public void decreaseHealth(int value) {
@@ -62,7 +62,7 @@ public class HealthManager : MonoBehaviour {
         currentHealth = initialHealth;
         
         //enable health bar since it was disabled when player reached 0 health
-        healthBarManager.showHealthBar();
+        healthBarController.showHealthBar();
            
         if(onHealthChange != null)
             onHealthChange(currentHealth);

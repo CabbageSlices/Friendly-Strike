@@ -2,7 +2,7 @@
 using System.Collections;
 
 //handles the graphics of the health bar
-public class HealthBarManager : MonoBehaviour {
+public class HealthBarController : MonoBehaviour {
 
     //rect transform of the part of the healthbar that represents the amount of health that is remaining (green part)
     public RectTransform healthValueIndicator;
@@ -20,7 +20,7 @@ public class HealthBarManager : MonoBehaviour {
 	void Start () {
 
         if (healthValueIndicator == null)
-            Debug.Log("HealthBarManager missing healthValueIndicator reference");
+            Debug.Log("HealthBarController missing healthValueIndicator reference");
 	}
 
     private void Update() {

@@ -1188,7 +1188,6 @@ MonoBehaviour:
   raycastLayers:
     serializedVersion: 2
     m_Bits: 1
-  timeScale: 1
   gameController: {fileID: 0}
 --- !u!114 &114000010839521662
 MonoBehaviour:
@@ -1218,7 +1217,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initialHealth: 100
-  healthBarManager: {fileID: 114000013186335004}
+  healthBarController: {fileID: 114000013186335004}
 --- !u!114 &114000011200374028
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1351,7 +1350,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1151d636c706a440ab420b202c813d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controllerId: 0
 --- !u!114 &114505453523577356
 MonoBehaviour:
   m_ObjectHideFlags: 1
