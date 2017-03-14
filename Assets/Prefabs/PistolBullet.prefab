@@ -120,7 +120,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   property: {fileID: 114000012532903976}
   rigidBody: {fileID: 50000011780974184}
-  boxCollider: {fileID: 61000013538812312}
+  collider: {fileID: 61000013538812312}
 --- !u!114 &114000012532903976
 MonoBehaviour:
   m_ObjectHideFlags: 1

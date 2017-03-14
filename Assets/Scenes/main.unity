@@ -1468,8 +1468,8 @@ GameObject:
   - component: {fileID: 1588496190}
   - component: {fileID: 1588496189}
   m_Layer: 0
-  m_Name: Players
-  m_TagString: Untagged
+  m_Name: TeamManager
+  m_TagString: TeamManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -161,6 +161,7 @@ public class PlayerController : MonoBehaviour {
 
         componentReferences.inputHandler.onJumpPress += jump;
         componentReferences.inputHandler.onFirePress += fire;
+        componentReferences.inputHandler.onFireRelease += releaseFireButton;
         componentReferences.inputHandler.onReloadPress += reload;
         componentReferences.weaponManager.onEquipWeapon += componentReferences.animationController.useAnimationForGun;
 
@@ -184,6 +185,7 @@ public class PlayerController : MonoBehaviour {
 
         componentReferences.inputHandler.onJumpPress -= jump;
         componentReferences.inputHandler.onFirePress -= fire;
+        componentReferences.inputHandler.onFireRelease -= releaseFireButton;
         componentReferences.inputHandler.onReloadPress -= reload;
         componentReferences.weaponManager.onEquipWeapon -= componentReferences.animationController.useAnimationForGun;
 
@@ -286,6 +288,11 @@ public class PlayerController : MonoBehaviour {
         }
 
         componentReferences.animationController.setFireParameter(fire);
+    }
+
+    void releaseFireButton() {
+
+        componentReferences.animationController.setFireParameter(false);
     }
 
     //the current ccalculated velocity of the player this frame

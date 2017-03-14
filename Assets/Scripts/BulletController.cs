@@ -5,7 +5,7 @@ using System.Collections.Generic;
 //handles all the behaviour for a given type of bullet
 //i.e movement
 [RequireComponent(typeof(BulletProperties))]
-public class BulletBehaviour : MonoBehaviour {
+public class BulletController : MonoBehaviour {
 
     //reference to teamManager to get colliders for players to ignore collision with teamamates of shooter
     public static TeamManager teamManager;
@@ -19,16 +19,19 @@ public class BulletBehaviour : MonoBehaviour {
     public Rigidbody2D rigidBody;
 
     //bullets collider cached
-    [SerializeField]private BoxCollider2D collider;
+    [SerializeField]private new BoxCollider2D collider;
 
 	// Use this for initialization
 	void Start () {
 
         if (rigidBody == null)
-            Debug.Log("rigidBody in BulletBehaviour is null");
+            Debug.Log("rigidBody in BulletController is null");
 
         if (property == null)
             Debug.Log("Bullet property is null");
+
+        if(collider == null)
+            Debug.Log("BulletController has no collider reference");
 
         if (teamManager == null)
             teamManager = GameObject.FindWithTag("TeamManager").GetComponent<TeamManager>() as TeamManager;

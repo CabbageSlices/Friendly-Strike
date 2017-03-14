@@ -177,7 +177,7 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.properties.lastFiredTime = Time.time;
 
         GameObject bullet = Instantiate(equippedWeapon.properties.bullet);
-        BulletBehaviour behaviourFiredBullet = (bullet.GetComponent<BulletBehaviour>() as BulletBehaviour);
+        BulletController behaviourFiredBullet = (bullet.GetComponent<BulletController>() as BulletController);
         
         behaviourFiredBullet.fire(equippedWeapon.parts.partThatIsAimed.transform.position, angleToTarget, equippedWeapon.properties.bulletSpread, shooter);
 
