@@ -9,8 +9,7 @@ public class PlayerController : MonoBehaviour {
     enum States {
 
         Grounded,
-        Jumping,
-        Falling,
+        InAir,
         Dead
     }
 
@@ -21,6 +20,12 @@ public class PlayerController : MonoBehaviour {
     //angle between the player and the target he is aiming at
     //used to fire a bullet, IN RADIANS
     private float angleToFireBullets;
+
+    //if the player hit a bouncy platform and was knocked up into the air and was given a large horizontal velocity
+    //then he should have reduced control over his horizontal movement until he hits a wall or becomes grounded
+    //only reduce his control if the initial horizontal velocity is above some threshold, that way if he is knocked straight up
+    //he can move left or right without restriction
+    private bool reduceHorizontalControl;
 
     //direction of the target the player is aiming towards relative to the player's arm origin
     //UN-NORMALIZD vector because when the player uses a joystick, this will store the user inputs on each axis
@@ -43,7 +48,7 @@ public class PlayerController : MonoBehaviour {
     //when player jumps or falls off a platform we reset gravity to whatever it was initially
     private float defaultGravity;
 
-    States currentState = States.Falling;
+    States currentState = States.InAir;
 
     [SerializeField]
     private PlayerComponentReferences componentReferences;
@@ -95,19 +100,15 @@ public class PlayerController : MonoBehaviour {
 
     void enterState(States next) {
 
-        if (next == States.Falling || next == States.Jumping) {
+        if (next == States.InAir) {
 
             componentReferences.body.gravityScale = defaultGravity;
-        }
-
-        if (next == States.Jumping) {
-            
-            componentReferences.body.velocity = new Vector2(componentReferences.body.velocity.x, gameplayProperties.jumpSpeed);
         }
 
         if(next == States.Grounded) {
 
             componentReferences.body.gravityScale = 0;
+            reduceHorizontalControl = false;
         }
 
         if(next == States.Dead) {
@@ -212,7 +213,7 @@ public class PlayerController : MonoBehaviour {
             //if the vector is 0 it means that he isn't standing on anything so he eshould start falling
             if(localHorizontalDirection.sqrMagnitude < 0.01f) {
 
-                changeState(States.Falling);
+                changeState(States.InAir);
             }
         }
 
@@ -225,7 +226,10 @@ public class PlayerController : MonoBehaviour {
 
         componentReferences.animationController.setJumpVelocityParameter(componentReferences.body.velocity.y);
         componentReferences.animationController.setIsGroundedParameter(currentState == States.Grounded);
-        componentReferences.animationController.setIsWalkingParameter(componentReferences.body.velocity.x != 0);
+
+        //if player has extreamly small velocity then don't count it as walking
+        bool isWalking = Mathf.Round(Mathf.Abs(componentReferences.body.velocity.x * 10)) / 10.0f > 0.5f;
+        componentReferences.animationController.setIsWalkingParameter(isWalking);
         
         determineSpriteDirection();
         determineSpriteArmOrientation();
@@ -235,6 +239,8 @@ public class PlayerController : MonoBehaviour {
     void handleInput() {
 
         float valueHorizontalAxis = componentReferences.inputHandler.getValueHorizontalAxis();
+
+        float acceleration = 1;
         Vector2 velocity = new Vector2(0, componentReferences.body.velocity.y);
 
         if (currentState == States.Grounded) {
@@ -246,14 +252,31 @@ public class PlayerController : MonoBehaviour {
             velocity = localHorizontalDirection * valueHorizontalAxis * gameplayProperties.speed;
         }
 
-        if(currentState == States.Jumping || currentState == States.Falling) {
+        if(currentState == States.InAir) {
 
             //if player moves horizontally then move him in global left or right direction
             //don't override the vertical velocity that way he can keep falling at wwhatever speed the physics engine
             velocity += new Vector2(1, 0) * valueHorizontalAxis * gameplayProperties.speed;
-        }
 
-        if(currentState == States.Dead) {
+                if (reduceHorizontalControl) {
+
+                    float targetVelocity = velocity.x;
+                    float diff = targetVelocity - componentReferences.body.velocity.x;
+                    float dvx = Mathf.Lerp(componentReferences.body.velocity.x, targetVelocity, acceleration * Time.deltaTime);
+                    velocity.x = dvx;
+               }
+            }
+
+            //if(Mathf.Abs(componentReferences.body.velocity.x) > gameplayProperties.speed) {
+
+            //float targetVelocity = velocity.x;
+            //float diff = targetVelocity - componentReferences.body.velocity.x;
+            //float dvx = Mathf.Lerp(componentReferences.body.velocity.x, targetVelocity, acceleration * Time.deltaTime);
+            //velocity.x = dvx;
+            //}
+
+
+            if (currentState == States.Dead) {
 
             //don't handle input
             return;
@@ -298,8 +321,12 @@ public class PlayerController : MonoBehaviour {
     //the current ccalculated velocity of the player this frame
     void jump() {
 
-        if(canJump())
-            changeState(States.Jumping);
+        if(canJump()) {
+
+            componentReferences.body.velocity = new Vector2(componentReferences.body.velocity.x, gameplayProperties.jumpSpeed);
+            changeState(States.InAir);
+        }
+            
     }
 
     void reload() {
@@ -520,6 +547,21 @@ public class PlayerController : MonoBehaviour {
         if (collision.contacts[0].normal.y < 0.2)
             return;
 
+        //check if player bounced off this platform
+        //player bounced off the platform if he went flying upwards
+        if(componentReferences.body.velocity.y > 0.5f) {
+
+            changeState(States.InAir);
+
+            //only reduce ehorizontal controls if the bounce gave him some horizontal velocity
+            reduceHorizontalControl = Mathf.Abs(componentReferences.body.velocity.x) > gameplayProperties.speed + 1;
+            
+            if(reduceHorizontalControl)
+                Debug.Log(componentReferences.body.velocity.x);
+            return;
+        }
+
+        //player landed normally on the platform
         changeState(States.Grounded);
         
         //if player is going upwards then he might have passed through a one way platform so he is still jumping
@@ -527,6 +569,30 @@ public class PlayerController : MonoBehaviour {
         //but lands on the slope again while he is still goign upwards
         /*if(body.velocity.y > 0)
             return;*/
+    }
+
+    private void OnTriggerExit2D(Collider2D collider) {
+
+        //if player bounced off a bouncy surface then put him in the jumping state becasue he is going upwards
+        //and is no longer grounded
+        //only applies to stuff he can stand on
+        if (((1 << collider.gameObject.gameObject.layer) & raycastLayers.value) == 0)
+            return;
+
+        //player is already in the air, no need to do this
+        if(currentState == States.InAir)
+            return;
+
+        //player collided against a wall horizontally, he might have walked into a wall horizontally so he probably didn't bounce
+        
+
+        //player went upwards from this collision
+        if(componentReferences.body.velocity.y > 0.5f) {
+
+            changeState(States.InAir);
+            reduceHorizontalControl = true;
+            Debug.Log("reduced");
+        }
     }
 
     //assigns the given display box to this player and makes the box track this player's information
