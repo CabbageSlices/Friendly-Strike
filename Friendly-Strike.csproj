@@ -91,6 +91,7 @@
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\PlayerGameplayProperties.cs" />
     <Compile Include="Assets\Scripts\PlayerInputHandler.cs" />
+    <Compile Include="Assets\Scripts\ShopController.cs" />
     <Compile Include="Assets\Scripts\StatusDisplayBoxController.cs" />
     <Compile Include="Assets\Scripts\StatusDisplayManager.cs" />
     <Compile Include="Assets\Scripts\TeamManager.cs" />
