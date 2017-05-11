@@ -27,29 +27,62 @@ public class ShopController : MonoBehaviour {
     int idCurrentSelection = 0;
 
     //height of each object displayed in the shop
+    //different from the text object's rect height because we made the text extra large and scaled it down to makei t look better, and so the rect height is incorrect
     int displayedObjectHeight = 39;
-
-    //number of objects that can be displayed through the viewport mask
-    int numberOfObjectsDisplayed;
 
 	// Use this for initialization
 	void Start () {
 		
         setupReferences();
 
-        numberOfObjectsDisplayed = (int)shopRectTransform.rect.height / displayedObjectHeight;
+        resizeContentRectToFitContent();
 
-        //set height of content rect to just enough to display all the objects that way we can't scroll over empty slots
-        contentRectTransform.sizeDelta = new Vector2(contentRectTransform.sizeDelta.x, displayedObjectHeight * textList.Count);
-
+        //texts are positioned at some weird ass offsets (2, 1) for (x, y) respectively, that wway the left and top edge of the text can actually be seen
+        //i don't know why i need to do this, but i do, so we have to make the selection indicator smaller so it won't overflow the content window
         selectionIndicatorRectTransform.sizeDelta = new Vector2(contentRectTransform.rect.width - 2, displayedObjectHeight - 1);
         
+        positionTexts();
+	}
+
+    //loop through all the display texts and position them in the content game objecet
+    void positionTexts() {
+
+        //y position of the bottom of the text that was positioned before the current text
+        //position is relative to topleft of the content rect
+        //used to position each text one after another
+        float bottomOfPreviousText = 0;
+
         for(int i = 0; i < textList.Count; ++i) {
 
             Text text = textList[i];
-            text.rectTransform.localPosition = new Vector3(2, -displayedObjectHeight * i);
+
+            float heightPreviousText = i == 0 ? 0 : calculateDisplayedHeight(textList[i - 1]);
+            bottomOfPreviousText += heightPreviousText;
+
+            text.rectTransform.localPosition = new Vector3(1, -bottomOfPreviousText);
         }
-	}
+    }
+
+    //calculates the eactual displayed height of the given text
+    float calculateDisplayedHeight(Text text) {
+
+        //calculate actual height of text, texts are scaled so we ehave to scale the rect height to get the size in the world
+        return text.transform.localScale.y * text.rectTransform.rect.height;
+    }
+
+    //resize the content rect so that it just barely fits all of the elements
+    //the width is never changed,it will be hte same as the viewport width, only the height will be changed
+    void resizeContentRectToFitContent() {
+
+        float totalSize = 0;
+
+        foreach(Text text in textList) {
+
+            totalSize += calculateDisplayedHeight(text);
+        }
+
+        contentRectTransform.sizeDelta = new Vector2(shopRectTransform.rect.width, totalSize);
+    }
 
     void setupReferences() {
 
@@ -59,7 +92,6 @@ public class ShopController : MonoBehaviour {
         shopRectTransform = GetComponent<RectTransform>() as RectTransform;
         selectionIndicator = transform.Find("Viewport/Content/SelectionIndicator").gameObject;
         selectionIndicatorRectTransform = selectionIndicator.GetComponent<RectTransform>() as RectTransform;
-
 
         var texts = GetComponentsInChildren<Text>();
         foreach(var obj in texts) {
@@ -81,8 +113,20 @@ public class ShopController : MonoBehaviour {
 
             goUpOneSelection();
         }
+
+        //player selected an option, handle the current selection
+        //if(Input.GetKeyDown(KeyCode.Return))
+            //textList[idCurrentSelection].onSelect(this);
             
 	}
+
+    void highlightCurrentlySelectedText() {
+
+        var selectedTextRectTransform = textList[idCurrentSelection].gameObject.GetComponent<RectTransform>() as RectTransform;
+
+        selectionIndicatorRectTransform.localPosition = selectedTextRectTransform.localPosition;
+        selectionIndicatorRectTransform.sizeDelta = new Vector2 (contentRectTransform.rect.width - 2, calculateDisplayedHeight(textList[idCurrentSelection]));
+    }
 
     //response to player pressing down
     public void goDownOneSelection() {
@@ -99,11 +143,10 @@ public class ShopController : MonoBehaviour {
         //by subtracting the content rects position from the selected text's position we determine how far from the top of the viewPort the selected text is located
         //if it is located outside of hte view port bounds (difference in possition is bigger than the heighto f hte view port) then we need to move the content rect upwards so we can see the selected text
         //we  add half the text's height that way we don't scroll down too  early
-        if(selectedTextRectTransform.localPosition.y * -1 + displayedObjectHeight / 2 - contentRectTransform.localPosition.y > shopRectTransform.rect.height)
+        if (selectedTextRectTransform.localPosition.y * -1 + displayedObjectHeight / 2 - contentRectTransform.localPosition.y > shopRectTransform.rect.height)
             contentRectTransform.localPosition = contentRectTransform.localPosition + new Vector3(0, displayedObjectHeight, 0);
 
-        selectionIndicatorRectTransform.localPosition = selectedTextRectTransform.localPosition;
-
+        highlightCurrentlySelectedText();
     }
 
     //response to player pressing up
@@ -119,7 +162,17 @@ public class ShopController : MonoBehaviour {
         //similar idea as for goDownOneSelection
         if (selectedTextRectTransform.localPosition.y * -1 - contentRectTransform.localPosition.y < -1)
             contentRectTransform.localPosition = contentRectTransform.localPosition - new Vector3(0, displayedObjectHeight, 0);
+        
+        highlightCurrentlySelectedText();
+    }
 
-        selectionIndicatorRectTransform.localPosition = selectedTextRectTransform.localPosition;
+    //take the given selection texts and creates replaces the current menu being displayed with a new one
+    //containing the given texts as options
+    public void displaySubMenu(List<UIAbstractSelectionTextController> menuEntries) {
+
+        /*
+            create a back button
+             
+        */
     }
 }
