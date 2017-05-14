@@ -73,6 +73,9 @@
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Assets\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\BulletController.cs" />
@@ -99,6 +102,7 @@
     <Compile Include="Assets\Scripts\TeamScoreManager.cs" />
     <Compile Include="Assets\Scripts\UIAbstractSelectionTextController.cs" />
     <Compile Include="Assets\Scripts\UISelectionTextController.cs" />
+    <Compile Include="Assets\Scripts\UISelectionTextCreationOptions.cs" />
     <Compile Include="Assets\Scripts\UITextSubMenuController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

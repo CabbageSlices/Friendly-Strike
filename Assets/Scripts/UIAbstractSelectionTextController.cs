@@ -8,9 +8,15 @@ using UnityEngine.UI;
 public abstract class UIAbstractSelectionTextController : MonoBehaviour {
 
     //the text script attatched to the game object that this controllerr is attached to
+    [System.NonSerialized]
     public Text text;
 
     //should do something when this text is selected
 	public abstract void onSelect(ShopController shopController);
+
+    private void Start() {
+        
+        text = gameObject.GetComponent<Text>() as Text;
+    }
 
 }

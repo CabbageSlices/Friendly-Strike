@@ -17,7 +17,10 @@ public class GameController : MonoBehaviour {
         ShutDown
     };
 
+    [System.NonSerialized]
     public TeamManager teamManager;
+
+    [System.NonSerialized]
     public GameObject playersParent;
 
     //minimum amount of money players will receive every round
@@ -30,6 +33,7 @@ public class GameController : MonoBehaviour {
     //in seconds
     public float roundEndDelay;
 
+    [System.NonSerialized]
     public StatusDisplayManager statusDisplayManager;
 
     List<PlayerController> players = new List<PlayerController>();
@@ -38,18 +42,28 @@ public class GameController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		
-        if(teamManager == null)
+
+        setupReferences();
+        getReferenceToPlayers();
+
+        if (teamManager == null)
             Debug.LogWarning("teamManager reference in GameController is null");
 
-        if(playersParent == null)
+        if (playersParent == null)
             Debug.LogWarning("PlayerParent reference in GameController is null");
 
         if (statusDisplayManager == null)
             Debug.LogWarning("statusDisplayManager reference in GameController is null");
 
-        getReferenceToPlayers();
-	}
+    }
+
+    void setupReferences() {
+
+        teamManager = GameObject.FindWithTag("TeamManager").GetComponent<TeamManager>() as TeamManager;
+        playersParent = GameObject.FindWithTag("TeamManager");
+
+        statusDisplayManager = GameObject.Find("StatusDisplay").GetComponent<StatusDisplayManager>() as StatusDisplayManager;
+    }
 	
 	// Update is called once per frame
 	void Update () {

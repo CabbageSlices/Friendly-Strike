@@ -35,6 +35,17 @@ public class TeamManager : MonoBehaviour {
     //game object that all player's are children of, for organization
     public GameObject playersParent;
 
+    private void Start() {
+
+        setupReferences();
+        registerPlayersIntoChosenTeams();
+    }
+
+    void setupReferences() {
+
+        playersParent = gameObject;
+    }
+
     //go through each player in the game and register him into his respective team
     public void registerPlayersIntoChosenTeams() {
 
@@ -86,10 +97,5 @@ public class TeamManager : MonoBehaviour {
         }
 
         return livingTeams;
-    }
-
-    private void Start() {
-
-        registerPlayersIntoChosenTeams();
     }
 }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class ShopController : MonoBehaviour {
 
@@ -29,18 +31,15 @@ public class ShopController : MonoBehaviour {
     //height of each object displayed in the shop
     //different from the text object's rect height because we made the text extra large and scaled it down to makei t look better, and so the rect height is incorrect
     int displayedObjectHeight = 39;
+    public string z;
 
 	// Use this for initialization
 	void Start () {
-		
+
         setupReferences();
 
+        recreateShopDisplay();
         resizeContentRectToFitContent();
-
-        //texts are positioned at some weird ass offsets (2, 1) for (x, y) respectively, that wway the left and top edge of the text can actually be seen
-        //i don't know why i need to do this, but i do, so we have to make the selection indicator smaller so it won't overflow the content window
-        selectionIndicatorRectTransform.sizeDelta = new Vector2(contentRectTransform.rect.width - 2, displayedObjectHeight - 1);
-        
         positionTexts();
 	}
 
@@ -70,6 +69,13 @@ public class ShopController : MonoBehaviour {
         return text.transform.localScale.y * text.rectTransform.rect.height;
     }
 
+    //resizes the contrent rect and repositions texts
+    void recreateShopDisplay() {
+
+        resizeContentRectToFitContent();
+        positionTexts();
+    }
+
     //resize the content rect so that it just barely fits all of the elements
     //the width is never changed,it will be hte same as the viewport width, only the height will be changed
     void resizeContentRectToFitContent() {
@@ -81,7 +87,7 @@ public class ShopController : MonoBehaviour {
             totalSize += calculateDisplayedHeight(text);
         }
 
-        contentRectTransform.sizeDelta = new Vector2(shopRectTransform.rect.width, totalSize);
+        contentRectTransform.sizeDelta = new Vector2(1, totalSize);
     }
 
     void setupReferences() {
@@ -130,7 +136,7 @@ public class ShopController : MonoBehaviour {
 
     //response to player pressing down
     public void goDownOneSelection() {
-        
+
         //select the next item
         //make sure it doesn't exceed the number of items
         idCurrentSelection = Mathf.Clamp(idCurrentSelection + 1, 0, textList.Count - 1);
@@ -166,13 +172,18 @@ public class ShopController : MonoBehaviour {
         highlightCurrentlySelectedText();
     }
 
-    //take the given selection texts and creates replaces the current menu being displayed with a new one
-    //containing the given texts as options
-    public void displaySubMenu(List<UIAbstractSelectionTextController> menuEntries) {
+    //take the given list of menu entries and replaces the current menu options with the new ones
+    //asssumes all game objects in the given list are references to prefabs so they must be instansiated
+    public void openSubMenu(List<GameObject> menuEntries) {
 
-        /*
-            create a back button
-             
-        */
+        List<GameObject> newSubMenu = new List<GameObject>();
+
+        foreach(GameObject obj in menuEntries) {
+
+            GameObject newEntry = GameObject.Instantiate(obj, content.transform);
+            newSubMenu.Add(newEntry);
+        }
+
+        recreateShopDisplay();
     }
 }
