@@ -1977,7 +1977,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1580386688}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.80804545
+  m_Size: 0.71943116
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2252,10 +2252,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a2e546cda2d39b429599b3387d401b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  z: "{ \t\"selectionTextType\": \"submenuText\", \t\"displayText\": \"Pistols\",
-    \ \t\"subMenuTexts\": [  \t\t{ \t\t\t\"selectionTextType\": \"actionText\", \t\t\t\"displayText\":
-    \"p1\" \t\t},  \t\t{ \t\t\t\"selectionTextType\": \"actionText\", \t\t\t\"displayText\":
-    \"p2\" \t\t} \t] }"
+  backButtonPrefab: {fileID: 1135610527829458, guid: ae253d15bf2ddca43919a73ae4116503,
+    type: 2}
 --- !u!114 &1642082445
 MonoBehaviour:
   m_ObjectHideFlags: 0

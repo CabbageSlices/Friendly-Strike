@@ -26,8 +26,8 @@ public class ShopController : MonoBehaviour {
     //id of  currently opened menu
     int idCurrentlyOpenedMenu = 0;
 
-    //id of the entry currently being selected in the shop display
-    int idCurrentSelection = 0;
+    //id of the entry currently being selected in the shop display in each of the sub menus
+    List<int> idCurrentSelectionInMenu = new List<int>();
 
     //prefab of backbutton, used to add a backb utton to submenus
     public GameObject backButtonPrefab;
@@ -60,6 +60,7 @@ public class ShopController : MonoBehaviour {
         }
 
         menus.Add(menu);
+        idCurrentSelectionInMenu.Add(0);
 
     }
 
@@ -102,8 +103,7 @@ public class ShopController : MonoBehaviour {
 
         resizeContentRectToFitContent();
         positionCurrentMenuEntries();
-
-        idCurrentSelection = 0;
+        
         highlightCurrentlySelectedEntry();
     }
 
@@ -131,6 +131,9 @@ public class ShopController : MonoBehaviour {
             GameObject.DestroyImmediate(obj);
 
         menus.RemoveAt(idMenuToRemove);
+        
+        //remove the seelction indicator for this menu
+        idCurrentSelectionInMenu.RemoveAt(idMenuToRemove);
     }
 
     //goes through every menu but the currently open menu and disables the gameobjects in that menu
@@ -163,6 +166,7 @@ public class ShopController : MonoBehaviour {
     // Update is called once per frame
     void Update() {
 
+        int idCurrentSelection = idCurrentSelectionInMenu[idCurrentlyOpenedMenu];
         //contentRectTransform.localPosition = contentRectTransform.localPosition + new Vector3(0, 2, 0);
         if (Input.GetKeyDown(KeyCode.DownArrow)) {
 
@@ -194,6 +198,8 @@ public class ShopController : MonoBehaviour {
 
     void highlightCurrentlySelectedEntry() {
 
+        int idCurrentSelection = idCurrentSelectionInMenu[idCurrentlyOpenedMenu];
+
         var selectedEntryRectTransform = menus[idCurrentlyOpenedMenu][idCurrentSelection].GetComponent<RectTransform>() as RectTransform;
 
         selectionIndicatorRectTransform.localPosition = selectedEntryRectTransform.localPosition;
@@ -203,9 +209,12 @@ public class ShopController : MonoBehaviour {
     //response to player pressing down
     public void goDownOneSelection() {
 
+        int idCurrentSelection = idCurrentSelectionInMenu[idCurrentlyOpenedMenu];
+
         //select the next item
         //make sure it doesn't exceed the number of items
         idCurrentSelection = Mathf.Clamp(idCurrentSelection + 1, 0, menus[idCurrentlyOpenedMenu].Count - 1);
+        idCurrentSelectionInMenu[idCurrentlyOpenedMenu] = idCurrentSelection;
 
         //if the selected item is outside of  the view then move the view down by the height of one object
         var selectedEntryRectTransform = menus[idCurrentlyOpenedMenu][idCurrentSelection].gameObject.GetComponent<RectTransform>() as RectTransform;
@@ -226,9 +235,12 @@ public class ShopController : MonoBehaviour {
     //response to player pressing up
     public void goUpOneSelection() {
 
+        int idCurrentSelection = idCurrentSelectionInMenu[idCurrentlyOpenedMenu];
+
         //select the next item
         //make sure it doesn't exceed the number of items
         idCurrentSelection = Mathf.Clamp(idCurrentSelection - 1, 0, menus[idCurrentlyOpenedMenu].Count - 1);
+        idCurrentSelectionInMenu[idCurrentlyOpenedMenu] = idCurrentSelection;
 
         //if the selected item is outside of  the view then move the view down by the height of one object
         var selectedEntryRectTransform = getRectTransform(menus[idCurrentlyOpenedMenu][idCurrentSelection]);
@@ -261,6 +273,9 @@ public class ShopController : MonoBehaviour {
         newSubMenu.Add(backButton);
 
         menus.Add(newSubMenu);
+
+        //create a seelction indicator for this new menu
+        idCurrentSelectionInMenu.Add(0);
 
         idCurrentlyOpenedMenu = menus.Count - 1;
         recreateShopDisplay();
