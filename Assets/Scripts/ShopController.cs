@@ -4,11 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Menu = System.Collections.Generic.List<UnityEngine.GameObject>; //Menu is just a list of ui entry controllers
 
 public class ShopController : MonoBehaviour {
-
-    //reference to scroll bar in order handle scrolling
-    Scrollbar scrollbar;
 
     //referecne to the gameobject that will keep all of the content being scrolled
     //all content must be a child of this gameobject
@@ -22,58 +20,130 @@ public class ShopController : MonoBehaviour {
     GameObject selectionIndicator;
     RectTransform selectionIndicatorRectTransform;
 
-    //collection of all text displayed
-    List<Text> textList = new List<Text>();
+    //list of all the menus that exist, this way when you press back on a menu you can access the previous menu
+    List<Menu> menus = new List<Menu>();
 
-    //id of the text currently being selected in the shop display
+    //id of  currently opened menu
+    int idCurrentlyOpenedMenu = 0;
+
+    //id of the entry currently being selected in the shop display
     int idCurrentSelection = 0;
 
-    //height of each object displayed in the shop
-    //different from the text object's rect height because we made the text extra large and scaled it down to makei t look better, and so the rect height is incorrect
-    int displayedObjectHeight = 39;
-    public string z;
+    //prefab of backbutton, used to add a backb utton to submenus
+    public GameObject backButtonPrefab;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start() {
 
         setupReferences();
 
-        recreateShopDisplay();
-        resizeContentRectToFitContent();
-        positionTexts();
-	}
+        //delay hte call because unity's layout group scripts and content size fitters need a frame to update and we can't access the contentRects size to resize everything for atleast a frame
+        Invoke("recreateShopDisplay", 0.001f);
+    }
 
-    //loop through all the display texts and position them in the content game objecet
-    void positionTexts() {
+    void setupReferences() {
 
-        //y position of the bottom of the text that was positioned before the current text
+       // scrollbar = GetComponentInChildren<Scrollbar>() as Scrollbar;
+        content = transform.Find("Viewport/Content").gameObject;
+        contentRectTransform = content.GetComponent<RectTransform>() as RectTransform;
+        shopRectTransform = GetComponent<RectTransform>() as RectTransform;
+        selectionIndicator = transform.Find("Viewport/Content/SelectionIndicator").gameObject;
+        selectionIndicatorRectTransform = selectionIndicator.GetComponent<RectTransform>() as RectTransform;
+
+        //get all entries in default menu
+        Menu menu = new Menu();
+        foreach (Transform menuEntry in content.transform) {
+
+            //don't add the seelction indicator to the default list of options
+            if(menuEntry.gameObject.name != "SelectionIndicator")
+                menu.Add(menuEntry.gameObject);
+        }
+
+        menus.Add(menu);
+
+    }
+
+    RectTransform getRectTransform(GameObject obj) {
+
+        return obj.GetComponent<RectTransform>() as RectTransform;
+    }
+
+    //loop through all the entries in the current menu and position them in the content game objecet
+    void positionCurrentMenuEntries() {
+
+        //y position of the bottom of the entry that was positioned before the current entry
         //position is relative to topleft of the content rect
-        //used to position each text one after another
-        float bottomOfPreviousText = 0;
+        //used to position each entry one after another
+        float bottomOfPreviousEntry = 0;
 
-        for(int i = 0; i < textList.Count; ++i) {
+        Menu currentMenu = menus[idCurrentlyOpenedMenu];
 
-            Text text = textList[i];
+        for (int i = 0; i < currentMenu.Count; ++i) {
 
-            float heightPreviousText = i == 0 ? 0 : calculateDisplayedHeight(textList[i - 1]);
-            bottomOfPreviousText += heightPreviousText;
+            RectTransform entryRectTransform = getRectTransform(currentMenu[i]);
 
-            text.rectTransform.localPosition = new Vector3(1, -bottomOfPreviousText);
+            float heightPreviousEntry = i == 0 ? 0 : calculateDisplayedHeight(currentMenu[i - 1]);
+            bottomOfPreviousEntry += heightPreviousEntry;
+
+            entryRectTransform.localPosition = new Vector3(1, -bottomOfPreviousEntry);
         }
     }
 
-    //calculates the eactual displayed height of the given text
-    float calculateDisplayedHeight(Text text) {
+    //calculates the actual displayed height of the menu entry
+    float calculateDisplayedHeight(GameObject entry) {
 
-        //calculate actual height of text, texts are scaled so we ehave to scale the rect height to get the size in the world
-        return text.transform.localScale.y * text.rectTransform.rect.height;
+        //calculate actual height of entry, entrys are scaled so we ehave to scale the rect height to get the size in the world
+        return entry.transform.localScale.y * getRectTransform(entry).rect.height;
     }
 
-    //resizes the contrent rect and repositions texts
+    //resizes the contrent rect and repositions entries for the currently opened menu
+    //does not touch any menu objects except the currently opened menu ones
     void recreateShopDisplay() {
 
         resizeContentRectToFitContent();
-        positionTexts();
+        positionCurrentMenuEntries();
+
+        idCurrentSelection = 0;
+        highlightCurrentlySelectedEntry();
+    }
+
+    //goes through all entries in the given menu and enables them
+    void enableAllEntries(Menu menu) {
+
+        foreach(GameObject obj in menu) {
+
+            obj.SetActive(true);
+        }
+    }
+
+    void disableAllEntries(Menu menu) {
+
+        foreach (GameObject obj in menu) {
+
+            obj.SetActive(false);
+        }
+    }
+
+    //removes all the menu entry game objects from the given menu, and then removes the menu from the list of all menus
+    void removeMenu(int idMenuToRemove) {
+
+        foreach(GameObject obj in menus[idMenuToRemove])
+            GameObject.DestroyImmediate(obj);
+
+        menus.RemoveAt(idMenuToRemove);
+    }
+
+    //goes through every menu but the currently open menu and disables the gameobjects in that menu
+    //then it enables the currently opneed menu
+    void enableOnlyOpenedMenu() {
+
+        for(int i = 0; i < menus.Count; ++i) {
+
+            if(i == idCurrentlyOpenedMenu)
+                enableAllEntries(menus[i]);
+            else
+                disableAllEntries(menus[i]);
+        }
     }
 
     //resize the content rect so that it just barely fits all of the elements
@@ -82,56 +152,52 @@ public class ShopController : MonoBehaviour {
 
         float totalSize = 0;
 
-        foreach(Text text in textList) {
+        foreach (GameObject entry in menus[idCurrentlyOpenedMenu]) {
 
-            totalSize += calculateDisplayedHeight(text);
+            totalSize += calculateDisplayedHeight(entry);
         }
-
-        contentRectTransform.sizeDelta = new Vector2(1, totalSize);
+        
+        contentRectTransform.sizeDelta = new Vector2(contentRectTransform.sizeDelta.x, totalSize);
     }
 
-    void setupReferences() {
+    // Update is called once per frame
+    void Update() {
 
-        scrollbar = GetComponentInChildren<Scrollbar>() as Scrollbar;
-        content = transform.Find("Viewport/Content").gameObject;
-        contentRectTransform = content.GetComponent<RectTransform>() as RectTransform;
-        shopRectTransform = GetComponent<RectTransform>() as RectTransform;
-        selectionIndicator = transform.Find("Viewport/Content/SelectionIndicator").gameObject;
-        selectionIndicatorRectTransform = selectionIndicator.GetComponent<RectTransform>() as RectTransform;
-
-        var texts = GetComponentsInChildren<Text>();
-        foreach(var obj in texts) {
-
-            textList.Add(obj as Text);
-        }
-    }
-	
-	// Update is called once per frame
-	void Update () {
-		
         //contentRectTransform.localPosition = contentRectTransform.localPosition + new Vector3(0, 2, 0);
-        if(Input.GetKeyDown(KeyCode.DownArrow) ) {
+        if (Input.GetKeyDown(KeyCode.DownArrow)) {
 
             goDownOneSelection();
         }
 
-        if(Input.GetKeyDown(KeyCode.UpArrow)) {
+        if (Input.GetKeyDown(KeyCode.UpArrow)) {
 
             goUpOneSelection();
         }
 
+        if(Input.GetKeyDown(KeyCode.Return)) {
+
+            (menus[idCurrentlyOpenedMenu][idCurrentSelection].GetComponent<UIAbstractSelectionTextController>() as UIAbstractSelectionTextController).onSelect(this);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Backspace)) {
+
+            goBackToPrevioussMenu();
+        }
+
+        highlightCurrentlySelectedEntry();
+
         //player selected an option, handle the current selection
         //if(Input.GetKeyDown(KeyCode.Return))
-            //textList[idCurrentSelection].onSelect(this);
-            
-	}
+        //entryList[idCurrentSelection].onSelect(this);
 
-    void highlightCurrentlySelectedText() {
+    }
 
-        var selectedTextRectTransform = textList[idCurrentSelection].gameObject.GetComponent<RectTransform>() as RectTransform;
+    void highlightCurrentlySelectedEntry() {
 
-        selectionIndicatorRectTransform.localPosition = selectedTextRectTransform.localPosition;
-        selectionIndicatorRectTransform.sizeDelta = new Vector2 (contentRectTransform.rect.width - 2, calculateDisplayedHeight(textList[idCurrentSelection]));
+        var selectedEntryRectTransform = menus[idCurrentlyOpenedMenu][idCurrentSelection].GetComponent<RectTransform>() as RectTransform;
+
+        selectionIndicatorRectTransform.localPosition = selectedEntryRectTransform.localPosition;
+        selectionIndicatorRectTransform.sizeDelta = new Vector2(contentRectTransform.rect.width - 2, calculateDisplayedHeight(menus[idCurrentlyOpenedMenu][idCurrentSelection]));
     }
 
     //response to player pressing down
@@ -139,20 +205,22 @@ public class ShopController : MonoBehaviour {
 
         //select the next item
         //make sure it doesn't exceed the number of items
-        idCurrentSelection = Mathf.Clamp(idCurrentSelection + 1, 0, textList.Count - 1);
+        idCurrentSelection = Mathf.Clamp(idCurrentSelection + 1, 0, menus[idCurrentlyOpenedMenu].Count - 1);
 
         //if the selected item is outside of  the view then move the view down by the height of one object
-        var selectedTextRectTransform = textList[idCurrentSelection].gameObject.GetComponent<RectTransform>() as RectTransform;
+        var selectedEntryRectTransform = menus[idCurrentlyOpenedMenu][idCurrentSelection].gameObject.GetComponent<RectTransform>() as RectTransform;
 
-        //none of the displayed text will ever move, only the content rect is moved
-        //to determine if the currently selected text can be viewed, we need to dtermine if the current offset of the content rect causes the selected text to be placed outside the view port
-        //by subtracting the content rects position from the selected text's position we determine how far from the top of the viewPort the selected text is located
-        //if it is located outside of hte view port bounds (difference in possition is bigger than the heighto f hte view port) then we need to move the content rect upwards so we can see the selected text
-        //we  add half the text's height that way we don't scroll down too  early
-        if (selectedTextRectTransform.localPosition.y * -1 + displayedObjectHeight / 2 - contentRectTransform.localPosition.y > shopRectTransform.rect.height)
+        float displayedObjectHeight = calculateDisplayedHeight(menus[idCurrentlyOpenedMenu][idCurrentSelection]);
+
+        //none of the displayed entry will ever move, only the content rect is moved
+        //to determine if the currently selected entry can be viewed, we need to dtermine if the current offset of the content rect causes the selected entry to be placed outside the view port
+        //by subtracting the content rects position from the selected entry's position we determine how far from the top of the viewPort the selected entry is located
+        //if it is located outside of hte view port bounds (difference in possition is bigger than the heighto f hte view port) then we need to move the content rect upwards so we can see the selected entry
+        //we  add half the entry's height that way we don't scroll down too  early
+        if (selectedEntryRectTransform.localPosition.y * -1 + displayedObjectHeight / 2 - contentRectTransform.localPosition.y > shopRectTransform.rect.height)
             contentRectTransform.localPosition = contentRectTransform.localPosition + new Vector3(0, displayedObjectHeight, 0);
 
-        highlightCurrentlySelectedText();
+        highlightCurrentlySelectedEntry();
     }
 
     //response to player pressing up
@@ -160,16 +228,18 @@ public class ShopController : MonoBehaviour {
 
         //select the next item
         //make sure it doesn't exceed the number of items
-        idCurrentSelection = Mathf.Clamp(idCurrentSelection - 1, 0, textList.Count - 1);
+        idCurrentSelection = Mathf.Clamp(idCurrentSelection - 1, 0, menus[idCurrentlyOpenedMenu].Count - 1);
 
         //if the selected item is outside of  the view then move the view down by the height of one object
-        var selectedTextRectTransform = textList[idCurrentSelection].rectTransform;
+        var selectedEntryRectTransform = getRectTransform(menus[idCurrentlyOpenedMenu][idCurrentSelection]);
+
+        float displayedObjectHeight = calculateDisplayedHeight(menus[idCurrentlyOpenedMenu][idCurrentSelection]);
 
         //similar idea as for goDownOneSelection
-        if (selectedTextRectTransform.localPosition.y * -1 - contentRectTransform.localPosition.y < -1)
+        if (selectedEntryRectTransform.localPosition.y * -1 - contentRectTransform.localPosition.y < -1)
             contentRectTransform.localPosition = contentRectTransform.localPosition - new Vector3(0, displayedObjectHeight, 0);
-        
-        highlightCurrentlySelectedText();
+
+        highlightCurrentlySelectedEntry();
     }
 
     //take the given list of menu entries and replaces the current menu options with the new ones
@@ -178,12 +248,34 @@ public class ShopController : MonoBehaviour {
 
         List<GameObject> newSubMenu = new List<GameObject>();
 
-        foreach(GameObject obj in menuEntries) {
+        foreach (GameObject obj in menuEntries) {
 
-            GameObject newEntry = GameObject.Instantiate(obj, content.transform);
+            GameObject newEntry = GameObject.Instantiate(obj);
+            newEntry.transform.SetParent(content.transform, false);
             newSubMenu.Add(newEntry);
         }
 
+        //create a back button
+        GameObject backButton = GameObject.Instantiate(backButtonPrefab);
+        backButton.transform.SetParent(content.transform, false);
+        newSubMenu.Add(backButton);
+
+        menus.Add(newSubMenu);
+
+        idCurrentlyOpenedMenu = menus.Count - 1;
         recreateShopDisplay();
+        enableOnlyOpenedMenu();
+    }
+
+    public void goBackToPrevioussMenu() {
+
+        //can't go back to previous menu since this is the only menu
+        if(idCurrentlyOpenedMenu == 0)
+            return;
+
+        idCurrentlyOpenedMenu -= 1;
+        removeMenu(idCurrentlyOpenedMenu + 1);
+        recreateShopDisplay();
+        enableOnlyOpenedMenu();
     }
 }

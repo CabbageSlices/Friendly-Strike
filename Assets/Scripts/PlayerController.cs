@@ -261,7 +261,6 @@ public class PlayerController : MonoBehaviour {
                 if (reduceHorizontalControl) {
 
                     float targetVelocity = velocity.x;
-                    float diff = targetVelocity - componentReferences.body.velocity.x;
                     float dvx = Mathf.Lerp(componentReferences.body.velocity.x, targetVelocity, acceleration * Time.deltaTime);
                     velocity.x = dvx;
                }

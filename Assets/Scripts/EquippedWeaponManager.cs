@@ -32,17 +32,12 @@ public class EquippedWeaponManager : MonoBehaviour {
     //the weapon currently equipped by the player
     private EquippedWeapon equippedWeapon = new EquippedWeapon();
 
-    //reference to teammanger so that it can be cached and used by bullets to ignore collisions
-    private TeamManager teamManager;
-
     public PlayerBodyParts playerBodyParts;
 
     void Start() {
 
         if (playerBodyParts == null)
             Debug.LogWarning("EquippedWeaponManager missing reference to playerBodyParts");
-
-        teamManager = gameObject.GetComponentInParent<TeamManager>() as TeamManager;
 
         //if there is a gun in the player's hand already then get a reference to it
         getReferenceToEquippedGun();
