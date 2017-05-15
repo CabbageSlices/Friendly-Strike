@@ -180,7 +180,7 @@ public class ShopController : MonoBehaviour {
 
         if(Input.GetKeyDown(KeyCode.Return)) {
 
-            (menus[idCurrentlyOpenedMenu][idCurrentSelection].GetComponent<UIAbstractSelectionTextController>() as UIAbstractSelectionTextController).onSelect(this);
+            (menus[idCurrentlyOpenedMenu][idCurrentSelection].GetComponent<IMenuEntry>() as IMenuEntry).onSelect(this);
         }
 
         if (Input.GetKeyDown(KeyCode.Backspace)) {

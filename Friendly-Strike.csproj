@@ -87,6 +87,7 @@
     <Compile Include="Assets\Scripts\GunProperties.cs" />
     <Compile Include="Assets\Scripts\HealthBarController.cs" />
     <Compile Include="Assets\Scripts\HealthManager.cs" />
+    <Compile Include="Assets\Scripts\IMenuEntry.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationController.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHashCodes.cs" />
     <Compile Include="Assets\Scripts\PlayerBodyParts.cs" />
@@ -100,9 +101,7 @@
     <Compile Include="Assets\Scripts\TeamManager.cs" />
     <Compile Include="Assets\Scripts\TeamProperties.cs" />
     <Compile Include="Assets\Scripts\TeamScoreManager.cs" />
-    <Compile Include="Assets\Scripts\UIAbstractSelectionTextController.cs" />
-    <Compile Include="Assets\Scripts\UISelectionTextController.cs" />
-    <Compile Include="Assets\Scripts\UISelectionTextCreationOptions.cs" />
+    <Compile Include="Assets\Scripts\UIGoBackTextController.cs" />
     <Compile Include="Assets\Scripts\UITextSubMenuController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
