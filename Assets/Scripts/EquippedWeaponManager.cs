@@ -59,11 +59,7 @@ public class EquippedWeaponManager : MonoBehaviour {
         if (gunTransform == null)
             return;
 
-        equippedWeapon.gun = gunTransform.gameObject;
-        equippedWeapon.properties = equippedWeapon.gun.GetComponent<GunProperties>() as GunProperties;
-        equippedWeapon.parts = equippedWeapon.gun.GetComponent<GunParts>() as GunParts;
-
-        equippedWeapon.gunElevationAbovePlayerHands = calculateEquippedGunElevation();
+        equipGun(gunTransform.gameObject);
     }
 
     //calculate the angle of elevation of the tip of the gun barrel above the player's hands, IN RADIANS
@@ -88,6 +84,30 @@ public class EquippedWeaponManager : MonoBehaviour {
         equippedWeapon.parts.cartridge.transform.localPosition = equippedWeapon.properties.initialCartridgePosition;
         equippedWeapon.parts.cartridge.transform.localScale = equippedWeapon.properties.initialCartridgeScale;
         equippedWeapon.parts.cartridge.transform.localRotation = equippedWeapon.properties.initialCartridgeRotation;
+    }
+
+    void unequipCurrentGun() {
+
+        if(equippedWeapon.gun == null)
+            return;
+
+        moveCartridgeToGun();
+        GameObject.DestroyImmediate(equippedWeapon.gun);
+
+        equippedWeapon.gun = null;
+        equippedWeapon.properties = null;
+        equippedWeapon.parts = null;
+
+        equippedWeapon.gunElevationAbovePlayerHands = 0;
+    }
+
+    public void equipGun(GameObject gun) {
+
+        equippedWeapon.gun = gun;
+        equippedWeapon.properties = gun.GetComponent<GunProperties>() as GunProperties;
+        equippedWeapon.parts = gun.GetComponent<GunParts>() as GunParts;
+
+        equippedWeapon.gunElevationAbovePlayerHands = calculateEquippedGunElevation();
     }
 
     //moves cartridge from gun to left hand for the reloading animation

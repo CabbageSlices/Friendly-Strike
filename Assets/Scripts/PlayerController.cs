@@ -146,6 +146,9 @@ public class PlayerController : MonoBehaviour {
                 GameObject.Destroy(bodyCloneForDeathEffect);
 
             bodyCloneForDeathEffect = null;
+            componentReferences.weaponManager.reload();
+
+            updateAllStatusDisplayBoxProperties();
         }
     }
 
@@ -611,7 +614,7 @@ public class PlayerController : MonoBehaviour {
 
         subscribeStatusDisplayBoxToEvents();
     }
-
+   
     //when a team's score gets changed the status display box should reflect the change
     public void handleTeamScoreChange(TeamProperties.Teams teamWhoseScoreWasChanged, int newScore) {
 
@@ -627,5 +630,18 @@ public class PlayerController : MonoBehaviour {
     public TeamProperties.Teams getTeam() {
 
         return gameplayProperties.team;
+    }
+
+    public void equipGun(GameObject gun) {
+        
+        componentReferences.weaponManager.equipGun(gun);
+        updateAllStatusDisplayBoxProperties();
+    }
+
+    void updateAllStatusDisplayBoxProperties() {
+
+        statusDisplayBox.setAmmo(componentReferences.weaponManager.getAmmo());
+        statusDisplayBox.setHealth(healthManager.getCurrentHealth());
+        statusDisplayBox.setMoney(gameplayProperties.playerMoney);
     }
 }
