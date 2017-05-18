@@ -636,6 +636,7 @@ public class PlayerController : MonoBehaviour {
         
         componentReferences.weaponManager.equipGun(gun);
         updateAllStatusDisplayBoxProperties();
+        componentReferences.animationController.useAnimationForGun(componentReferences.weaponManager.getTypeOfEquippedWeapon());
     }
 
     void updateAllStatusDisplayBoxProperties() {

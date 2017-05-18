@@ -25,8 +25,7 @@ public class PlayerAnimationController : MonoBehaviour {
 		
         if(animator == null)
             animator = gameObject.GetComponentInChildren<Animator>() as Animator;
-
-        disableArmLayers();
+        
         useAnimationForGun(GunProperties.Type.SMG);
 	}
 
@@ -66,6 +65,8 @@ public class PlayerAnimationController : MonoBehaviour {
 
     //make ethe player play the arm animations that correspond to the given type of weapon
     public void useAnimationForGun(GunProperties.Type type) {
+
+        disableArmLayers();
 
         //enable the layer that corresponds to the given weapon
         animator.SetLayerWeight(gunTypeToLayer[type], 100.0f);
