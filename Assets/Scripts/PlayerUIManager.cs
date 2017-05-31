@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //class that assigns status display boxes to players
-public class StatusDisplayManager : MonoBehaviour {
+public class PlayerUIManager : MonoBehaviour {
 
     //used to assign display boxes to one team at a time so all players of the same team are grouped together
     public TeamManager teamManager;
@@ -11,22 +11,27 @@ public class StatusDisplayManager : MonoBehaviour {
     //parent game object ot all players
     GameObject playersParent;
 
-    //go through each player and give them a status display box
+    //go through each player and give them their status display box and shop ui
     //player's are added as children to the playersParent gameobject in the order that they registered themselves
     //so the first player is player 1, second player is player 2, etc..
-    //assign status display box so that player1 box goes to player1, and so on
-    public void assignStatusDisplayBoxesToPlayers() {
+    //assign ui  components so that player1 status display box / shop goes to player1, and so on
+    public void assignUIToPlayers() {
 
-        for(int i = 0; i < playersParent.transform.childCount; ++i) {
+        //get all the status display boxes and shop componetns
+        //then assign them to their corresponding player
+        StatusDisplayBoxController[] statusDisplayBoxes = gameObject.GetComponentsInChildren<StatusDisplayBoxController>(true);
+        ShopController[] shops = gameObject.GetComponentsInChildren<ShopController>(true);
 
-            PlayerController player = playersParent.transform.GetChild(i).gameObject.GetComponent<PlayerController>() as PlayerController;
+        for (int i = 0; i < playersParent.transform.childCount; ++i) {
 
-            //enable this display box incase it was deactivated at some point
-            transform.GetChild(i).gameObject.SetActive(true);
+            PlayerController player = playersParent.transform.GetChild(i).gameObject.GetComponent<PlayerController>();
 
-            StatusDisplayBoxController displayBoxForThisPlayer = transform.GetChild(i).gameObject.GetComponent<StatusDisplayBoxController>() as StatusDisplayBoxController;
+            //enable shop ui and status display box for this playerr
+            statusDisplayBoxes[i].gameObject.SetActive(true);
+            shops[i].gameObject.SetActive(true);
 
-            player.assignStatusDisplayBox(displayBoxForThisPlayer);
+            player.assignStatusDisplayBox(statusDisplayBoxes[i]);
+            shops[i].assignPlayer(player);
         }
 
         //disable all unused display boxes
@@ -43,10 +48,10 @@ public class StatusDisplayManager : MonoBehaviour {
         teamManager = playersParent.GetComponent<TeamManager>() as TeamManager;
 
         if (teamManager == null)
-            Debug.LogWarning("StatusDisplayManager script missing teamManager reference");
+            Debug.LogWarning("PlayerUIManager script missing teamManager reference");
 
         if (playersParent== null)
-            Debug.LogWarning("StatusDisplayManager script missing playersParent reference");
+            Debug.LogWarning("PlayerUIManager script missing playersParent reference");
 
         //DO NOT ASSIGN A DISPLAY BOX IN THE START FUNCTION
         //NOT ALL GAME OBJECTS ARE GUARANTEED TO HAVE RUN THEIR START ROUTINE

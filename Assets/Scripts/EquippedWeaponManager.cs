@@ -40,7 +40,15 @@ public class EquippedWeaponManager : MonoBehaviour {
             Debug.LogWarning("EquippedWeaponManager missing reference to playerBodyParts");
 
         //if there is a gun in the player's hand already then get a reference to it
-        getReferenceToEquippedGun();
+        //FOR SOME REASON THE ANGLE CALCULATION IS WRONG FOR THE FIRST FEW FRAMESS
+        //MOST LIKELY BECAUSE THE PLAYER'S AIMING ANIMATION HASN'T STARTED PLAYING YET SO THE GUN ISN'T POSITIONED CORRECTLY
+        //DELAY THE ANGLE CALCULATION UNTIL THE NEXT FRAME
+        Invoke("getReferenceToEquippedGun", 0.02f);
+    }
+
+    void Update() {
+
+        //calculateEquippedGunElevation();
     }
 
     void getReferenceToEquippedGun() {
@@ -62,33 +70,9 @@ public class EquippedWeaponManager : MonoBehaviour {
         equipGun(gunTransform.gameObject);
     }
 
-    //calculate the angle of elevation of the tip of the gun barrel above the player's hands, IN RADIANS
-    float calculateEquippedGunElevation() {
-
-        if (equippedWeapon.gun == null)
-            return 0;
-
-        Vector2 armToBarrelTip = equippedWeapon.parts.partThatIsAimed.transform.position - playerBodyParts.arms.transform.position;
-        Vector2 armToHandTip = playerBodyParts.rightHand.transform.position - playerBodyParts.arms.transform.position;
-
-        float cosAngle = Vector2.Dot(armToHandTip.normalized, armToBarrelTip.normalized);
-        float angleOffset = Mathf.Acos(cosAngle);
-
-        //gotta divide by two for whatever reason
-        return angleOffset;
-    }
-
-    //put cartridge back to its initial position relative to the gun
-    void connectCartridgeToGun() {
-
-        equippedWeapon.parts.cartridge.transform.localPosition = equippedWeapon.properties.initialCartridgePosition;
-        equippedWeapon.parts.cartridge.transform.localScale = equippedWeapon.properties.initialCartridgeScale;
-        equippedWeapon.parts.cartridge.transform.localRotation = equippedWeapon.properties.initialCartridgeRotation;
-    }
-
     void unequipCurrentGun() {
 
-        if(equippedWeapon.gun == null)
+        if (equippedWeapon.gun == null)
             return;
 
         moveCartridgeToGun();
@@ -103,11 +87,62 @@ public class EquippedWeaponManager : MonoBehaviour {
 
     public void equipGun(GameObject gun) {
 
+        unequipCurrentGun();
+        parentHandToGun(gun, 0);
+
         equippedWeapon.gun = gun;
         equippedWeapon.properties = gun.GetComponent<GunProperties>() as GunProperties;
         equippedWeapon.parts = gun.GetComponent<GunParts>() as GunParts;
-
+        
         equippedWeapon.gunElevationAbovePlayerHands = calculateEquippedGunElevation();
+    }
+
+    //allow the parrenting to be delayed so that the animation system can change the player's animation to his gun's animation before the gun's new position is calculated
+    void parentHandToGun(GameObject gun, float delayTime) {
+
+        Transform gunTransform = gun.transform;
+
+        //parent the gun to the player's hand
+        gunTransform.SetParent(playerBodyParts.rightHand.transform, false);
+
+        //reset gun's transform so that it's positioned in the player's hand
+        gunTransform.localPosition = new Vector3(0, 0, 0);
+        gunTransform.localRotation = Quaternion.Euler(0, 0, 0);
+        gunTransform.localScale = new Vector3(1, 1, 1);
+    }
+
+    //calculate the angle of elevation of the tip of the gun barrel above the player's hands, IN RADIANS
+    //ONLY WORKS CORRECTLY ONCE YOU HAVE ALREADY PARENTED THE GUN TO THE PLAYER 
+    public float calculateEquippedGunElevation(/*Vector2 vectorToTarget*/) {
+
+        if (equippedWeapon.gun == null)
+            return 0;
+
+        //Debug.Log("BarrelTip: " + equippedWeapon.parts.partThatIsAimed.transform.position + "  arm base: " + playerBodyParts.arms.transform.position);
+        //Debug.Log("handTip: " + playerBodyParts.rightHand.transform.position + "  arm base:  " + playerBodyParts.arms.transform.position);
+
+        //vector from the point where the player's arm connects to his body, to the point on the barrel's tip
+        Vector2 armOriginToBarrelTip = equippedWeapon.parts.partThatIsAimed.transform.position - playerBodyParts.arms.transform.position;
+        Vector2 armToHandTip = playerBodyParts.rightHand.transform.position - playerBodyParts.arms.transform.position;
+        //armToHandTip = vectorToTarget;
+        
+        float cosAngle = Vector2.Dot(armToHandTip.normalized, armOriginToBarrelTip.normalized);
+        float angleOffset = Mathf.Acos(cosAngle);
+
+       // Debug.Log("Elevation: " + angleOffset * Mathf.Rad2Deg);
+        Debug.DrawRay(playerBodyParts.arms.transform.position, armOriginToBarrelTip, Color.green);
+        Debug.DrawRay(playerBodyParts.arms.transform.position, armToHandTip, Color.blue);
+
+        //gotta divide by two for whatever reason
+        return angleOffset;
+    }
+
+    //put cartridge back to its initial position relative to the gun
+    void connectCartridgeToGun() {
+
+        equippedWeapon.parts.cartridge.transform.localPosition = equippedWeapon.properties.initialCartridgePosition;
+        equippedWeapon.parts.cartridge.transform.localScale = equippedWeapon.properties.initialCartridgeScale;
+        equippedWeapon.parts.cartridge.transform.localRotation = equippedWeapon.properties.initialCartridgeRotation;
     }
 
     //moves cartridge from gun to left hand for the reloading animation

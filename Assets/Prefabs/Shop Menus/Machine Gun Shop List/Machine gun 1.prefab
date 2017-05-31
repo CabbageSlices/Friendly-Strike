@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 224713060183013628}
   - component: {fileID: 222182597347566548}
   - component: {fileID: 114017756009877644}
+  - component: {fileID: 114685365362724910}
   m_Layer: 5
   m_Name: Machine gun 1
   m_TagString: Untagged
@@ -61,6 +62,18 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Machine gun 1
+--- !u!114 &114685365362724910
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1239591374681336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f52b4136d5aadb40848807903065321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gunName: smg
 --- !u!222 &222182597347566548
 CanvasRenderer:
   m_ObjectHideFlags: 1

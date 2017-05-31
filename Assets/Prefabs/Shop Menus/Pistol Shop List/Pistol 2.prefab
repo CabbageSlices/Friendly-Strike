@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 224965927380093398}
   - component: {fileID: 222010747249015612}
   - component: {fileID: 114845423188499766}
+  - component: {fileID: 114723848022885928}
   m_Layer: 5
   m_Name: Pistol 2
   m_TagString: Untagged
@@ -28,6 +29,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &114723848022885928
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1732842402156938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f52b4136d5aadb40848807903065321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gunName: pistol
 --- !u!114 &114845423188499766
 MonoBehaviour:
   m_ObjectHideFlags: 1

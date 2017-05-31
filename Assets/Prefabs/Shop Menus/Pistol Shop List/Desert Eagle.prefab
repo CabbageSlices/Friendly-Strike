@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 224236569476282802}
   - component: {fileID: 222199662562672184}
   - component: {fileID: 114958310679287578}
+  - component: {fileID: 114699779683513518}
   m_Layer: 5
   m_Name: Desert Eagle
   m_TagString: Untagged
@@ -28,6 +29,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &114699779683513518
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1610620391033728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f52b4136d5aadb40848807903065321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gunName: pistol
 --- !u!114 &114958310679287578
 MonoBehaviour:
   m_ObjectHideFlags: 1

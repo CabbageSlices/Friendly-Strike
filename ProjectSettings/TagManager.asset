@@ -7,6 +7,8 @@ TagManager:
   - PlayerBodyPart
   - Gun
   - TeamManager
+  - StatusDisplayBox
+  - Shop
   layers:
   - Default
   - TransparentFX

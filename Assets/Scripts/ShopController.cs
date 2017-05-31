@@ -32,6 +32,10 @@ public class ShopController : MonoBehaviour {
     //prefab of backbutton, used to add a backb utton to submenus
     public GameObject backButtonPrefab;
 
+    //the player that this shop will be associated dto
+    //it will receive input from this player and all purchases will affect this player
+    PlayerController player;
+
     // Use this for initialization
     void Start() {
 
@@ -292,5 +296,23 @@ public class ShopController : MonoBehaviour {
         removeMenu(idCurrentlyOpenedMenu + 1);
         recreateShopDisplay();
         enableOnlyOpenedMenu();
+    }
+
+    public void handlePurchaseRequest(GunShopDatabase.GunData gun) {
+        
+        if(player == null) {
+            Debug.LogWarning("Shop Controller missing reference to it's player");
+            return;
+        }
+
+        GameObject newGun = Instantiate(gun.gunPrefab);
+        newGun.name = gun.gunPrefab.name;
+        var controller = newGun.GetComponent<GunProperties>();
+        player.equipGun(newGun);
+    }
+
+    public void assignPlayer(PlayerController player) {
+
+        this.player = player;
     }
 }

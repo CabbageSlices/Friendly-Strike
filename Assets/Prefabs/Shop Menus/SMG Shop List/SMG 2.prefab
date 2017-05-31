@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 224027112288086820}
   - component: {fileID: 222475351479112052}
   - component: {fileID: 114476989194034432}
+  - component: {fileID: 114186795538323804}
   m_Layer: 5
   m_Name: SMG 2
   m_TagString: Untagged
@@ -28,6 +29,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &114186795538323804
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1220828537714154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f52b4136d5aadb40848807903065321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gunName: smg
 --- !u!114 &114476989194034432
 MonoBehaviour:
   m_ObjectHideFlags: 1

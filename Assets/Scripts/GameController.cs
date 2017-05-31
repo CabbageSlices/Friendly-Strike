@@ -34,7 +34,7 @@ public class GameController : MonoBehaviour {
     public float roundEndDelay;
 
     [System.NonSerialized]
-    public StatusDisplayManager statusDisplayManager;
+    public PlayerUIManager playerUIManager;
 
     List<PlayerController> players = new List<PlayerController>();
 
@@ -52,9 +52,8 @@ public class GameController : MonoBehaviour {
         if (playersParent == null)
             Debug.LogWarning("PlayerParent reference in GameController is null");
 
-        if (statusDisplayManager == null)
-            Debug.LogWarning("statusDisplayManager reference in GameController is null");
-
+        if (playerUIManager == null)
+            Debug.LogWarning("playerUIManager reference in GameController is null");
     }
 
     void setupReferences() {
@@ -62,7 +61,7 @@ public class GameController : MonoBehaviour {
         teamManager = GameObject.FindWithTag("TeamManager").GetComponent<TeamManager>() as TeamManager;
         playersParent = GameObject.FindWithTag("TeamManager");
 
-        statusDisplayManager = GameObject.Find("StatusDisplay").GetComponent<StatusDisplayManager>() as StatusDisplayManager;
+        playerUIManager = GameObject.Find("PlayerUIDisplay").GetComponent<PlayerUIManager>() as PlayerUIManager;
     }
 	
 	// Update is called once per frame
@@ -90,7 +89,7 @@ public class GameController : MonoBehaviour {
 
         if(currentState == States.StartUp) {
 
-            statusDisplayManager.assignStatusDisplayBoxesToPlayers();
+            playerUIManager.assignUIToPlayers();
         }
 
         if(currentState == States.Gameplay) {

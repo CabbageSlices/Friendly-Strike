@@ -1,0 +1,13 @@
+{
+	"pistol": {
+
+		"pathToPrefab": "guns/pistols/Gun",//path to the prefab in the resources folder
+		"price": 500,
+	},
+
+	"smg": {
+		
+		"pathToPrefab": "guns/subMachineGuns/smg",
+		"price": 1000
+	}
+}

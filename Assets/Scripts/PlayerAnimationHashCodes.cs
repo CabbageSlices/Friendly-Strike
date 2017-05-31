@@ -13,4 +13,6 @@ public static class PlayerAnimationHashCodes {
     public static int isWalkingKey = Animator.StringToHash("IsWalking");
     public static int jumpVelocityKey = Animator.StringToHash("JumpVelocity"); //velocity is used to determine if jumpUp animatin should be used or jumpDown animation
     public static int IsGroundedKey = Animator.StringToHash("IsGrounded");
+
+    public static int pistolLayerKey = Animator.StringToHash("ArmsPistol");
 }

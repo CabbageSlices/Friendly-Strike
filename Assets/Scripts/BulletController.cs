@@ -51,8 +51,8 @@ public class BulletController : MonoBehaviour {
 
         //make bullet point in the same direction as the gun
         transform.rotation = Quaternion.Euler(0, 0, actualFireAngle);
-
-        rigidBody.velocity = Quaternion.Euler(0, 0, actualFireAngle) * Vector2.right * property.speed;
+        transform.position += transform.right * GetComponent<BoxCollider2D>().size.x;
+        rigidBody.velocity = transform.right * property.speed;
 
         setupCollisionsToIgnore(shooter);
     }

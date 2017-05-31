@@ -387,9 +387,10 @@ public class PlayerController : MonoBehaviour {
         //force angles between [-pi, pi] since mirroring the arm makes the rotation face left or right to get full 2pi radians coverage
         float angle = Mathf.Atan2(aimTargetPosition.y, Mathf.Abs(aimTargetPosition.x));
         angleToFireBullets = Mathf.Atan2(aimTargetPosition.y, aimTargetPosition.x);//this angle is different from the angle used to rotate the arms
-        //Since angleToFireBullets is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
+                                                                                   //Since angleToFireBullets is between [-pi, pi] and angle is bewteen [-pi/2, pi/2] AND angle is modified a little bit so the gun is aligned with the line of sight
 
-        angle -= componentReferences.weaponManager.getGunElevationAbovePlayerHands();
+
+        //angle -= componentReferences.weaponManager.getGunElevationAbovePlayerHands();
 
         //if user is reloading then disable aiming so it doesn't mess up the reloading animation
         if (componentReferences.animationController.isReloading())
@@ -398,7 +399,7 @@ public class PlayerController : MonoBehaviour {
         //if the arm is scaled by -1 then you need to multiply the angle by negative 1 because unity will automatically invert the angle when scale is negative
         if (componentReferences.bodyParts.arms.transform.lossyScale.x < 0)
             angle *= -1;
-
+        
         componentReferences.bodyParts.arms.transform.rotation = Quaternion.Slerp(componentReferences.bodyParts.arms.transform.rotation, Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg), Time.deltaTime * gameplayProperties.aimSensitivity);
         Debug.DrawRay(componentReferences.bodyParts.arms.transform.position, aimTargetPosition, Color.red);
 
@@ -633,10 +634,10 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void equipGun(GameObject gun) {
-        
+
         componentReferences.weaponManager.equipGun(gun);
-        updateAllStatusDisplayBoxProperties();
         componentReferences.animationController.useAnimationForGun(componentReferences.weaponManager.getTypeOfEquippedWeapon());
+        updateAllStatusDisplayBoxProperties();
     }
 
     void updateAllStatusDisplayBoxProperties() {
